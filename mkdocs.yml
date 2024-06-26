@@ -5,7 +5,9 @@ plugins:
 nav:
   - 'index.md'
   - 'usage.md'
-  - 'examples.md'
+  - Examples:
+    - 'example_csv.md'
+    - 'example_xml.md'
   - 'api.md'
 watch:
   - docs

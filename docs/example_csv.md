@@ -1,6 +1,4 @@
-# Examples
-
-## CSV reader
+# CSV reader
 
 This example will define a basic CSV reader. 
 
@@ -32,7 +30,7 @@ class HamletReader(CSVReader):
     pass
 ```
 
-### File discovery
+## File discovery
 
 Before we can use the `HamletReader`, some additional attributes must be implemented. First, we need to implement `data_directory` and `sources`.
 
@@ -53,7 +51,7 @@ This states that our data is located in `~/data`. The method `sources()` specifi
 
 Note that `sources()` includes some assumptions about the contents of the directory, which is why you need to define it for your dataset. For instance, this implementation assumes that all files in the data directory are actually CSV files that can be parsed by the reader, and returns all files. You could add a check for the file extension if that is not appropriate.
 
-### Defining fields
+## Defining fields
 
 Next, we need to define the fields that should be extracted for each document. The original CSV provides each line in the play, and lists the act, scene, character and the text of the line. We want to extract all those values. For good measure, we will also include the name of the play as a constant value.
 
@@ -178,11 +176,11 @@ The example section would look like this in the output:
 ]
 ```
 
-### Tweaking extraction
+## Tweaking extraction
 
 We can adjust the CSV extraction.
 
-#### Transforming values
+### Transforming values
 
 The `character` field returns the character's names in uppercase, e.g. `'HAMLET'` (how they appeared in the data). Say that we would prefer `'Hamlet'`; we can add a `transform` argument to the extractor for `character`.
 
@@ -201,7 +199,7 @@ The check `if name` is needed because the character can also be `None`. If a nam
 
 Now the character names in the output will be `'Hamlet'` and `'Ghost'`.
 
-#### Grouping rows
+### Grouping rows
 
 Instead of returning documents of a single line, we would like the reader to group multiple lines spoken by the same character.
 
@@ -323,7 +321,7 @@ Its output should look like this:
 ]
 ```
 
-### Adding metadata
+## Adding metadata
 
 Our `HamletReader` used a constant to return the name of the play. If we add more plays to our dataset, this won't work anymore.
 
