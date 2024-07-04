@@ -8,6 +8,7 @@ nav:
   - Examples:
     - 'example_csv.md'
     - 'example_xml.md'
+    - 'example_custom.md'
   - 'api.md'
 watch:
   - docs
