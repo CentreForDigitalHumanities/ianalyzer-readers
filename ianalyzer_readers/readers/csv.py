@@ -9,6 +9,7 @@ from typing import List, Dict, Iterable
 from .core import Reader, Document, Source
 import csv
 import sys
+from contextlib import contextmanager, AbstractContextManager
 
 import logging
 
@@ -73,47 +74,47 @@ class CSVReader(Reader):
         csv.field_size_limit(sys.maxsize)
         self._reject_extractors(extract.XML)
 
-        if isinstance(source, str):
-            filename = source
-            metadata = {}
-        elif isinstance(source, bytes):
-            raise NotImplementedError()
-        else:
-            filename, metadata = source
+        return super().source2dicts(source)
 
-        with open(filename, 'r') as f:
-            logger.info('Reading CSV file {}...'.format(filename))
+    @contextmanager
+    def data_from_file(self, path: str):
+        with open(path, 'r') as f:
+            logger.info('Reading CSV file {}...'.format(path))
 
             # skip first n lines
             for _ in range(self.skip_lines):
                 next(f)
 
             reader = csv.DictReader(f, delimiter=self.delimiter)
-            document_id = None
-            rows = []
-            index = 0
-            for row in reader:
-                is_new_document = True
-
-                if self.required_field and not row.get(self.required_field):  # skip row if required_field is empty
-                    continue
+            yield reader
 
 
-                if self.field_entry:
-                    identifier = row[self.field_entry]
-                    if identifier == document_id:
-                        is_new_document = False
-                    else:
-                        document_id = identifier
+    def iterate_data(self, data: csv.DictReader, metadata) -> Iterable[Document]:
+        document_id = None
+        rows = []
+        index = 0
+        for row in data:
+            is_new_document = True
 
-                if is_new_document and rows:
-                    yield self._document_from_rows(rows, metadata, index)
-                    rows = [row]
-                    index += 1
+            if self.required_field and not row.get(self.required_field):  # skip row if required_field is empty
+                continue
+
+            if self.field_entry:
+                identifier = row[self.field_entry]
+                if identifier == document_id:
+                    is_new_document = False
                 else:
-                    rows.append(row)
+                    document_id = identifier
 
-            yield self._document_from_rows(rows, metadata, index)
+            if is_new_document and rows:
+                yield self._document_from_rows(rows, metadata, index)
+                rows = [row]
+                index += 1
+            else:
+                rows.append(row)
+
+        yield self._document_from_rows(rows, metadata, index)
+
 
     def _document_from_rows(self, rows: List[Dict], metadata: Dict, doc_index: int) -> Document:
         '''

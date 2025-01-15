@@ -8,9 +8,11 @@ The module defines two classes, `Field` and `Reader`.
 '''
 
 from .. import extract
-from typing import List, Iterable, Dict, Any, Union, Tuple, Optional
+from typing import List, Iterable, Dict, Any, Union, Tuple, Optional, Generator
 import logging
 import csv
+from os.path import isfile
+from contextlib import AbstractContextManager
 
 logging.basicConfig(level=logging.WARNING)
 logging.getLogger('ianalyzer-readers').setLevel(logging.DEBUG)
@@ -148,7 +150,45 @@ class Reader(object):
             NotImplementedError: This method needs to be implemented on child
                 classes. It will raise an error by default.
         '''
-        raise NotImplementedError('Reader missing source2dicts implementation')
+
+        data, metadata = self.data_and_metadata_from_source(source)
+
+        if isinstance(data, AbstractContextManager):
+            with data as data:
+                for document in self.iterate_data(data, metadata):
+                    yield document
+        else:
+            return self.iterate_data(data, metadata)
+
+
+    def data_and_metadata_from_source(self, source: Source) -> Tuple[Generator[Any, None, None], Dict]:
+        if isinstance(source, tuple) and len(source) == 2:
+            source_data, metadata = source
+        else:
+            source_data = source
+            metadata = {}
+
+        if isinstance(source_data, str):
+            data = self.data_from_file(source_data)
+        elif isinstance(source, bytes):
+            data = self.data_from_bytes(source_data)
+        else:
+            raise TypeError(f'unknown source type: {type(source_data)}')
+
+        return data, metadata
+
+
+    def data_from_file(self, path: str) -> Any:
+        raise NotImplemented('This reader does not support filename input')
+
+
+    def data_from_bytes(self, bytes: bytes) -> Any:
+        raise NotImplemented('This reader does not support bytes input')
+
+
+    def iterate_data(self, data: Any, metadata: Dict) -> Iterable[Document]:
+        pass
+
 
     def documents(self, sources:Iterable[Source] = None) -> Iterable[Document]:
         '''
