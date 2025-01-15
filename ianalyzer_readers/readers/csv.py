@@ -6,10 +6,10 @@ Extraction is based on python's `csv` library.
 
 from .. import extract
 from typing import List, Dict, Iterable
-from .core import Reader, Document, Source
+from .core import Reader, Document
 import csv
 import sys
-from contextlib import contextmanager, AbstractContextManager
+from contextlib import contextmanager
 
 import logging
 
@@ -56,25 +56,12 @@ class CSVReader(Reader):
     use a fixed "preamble", e.g. to describe metadata or provenance.
     '''
 
-    def source2dicts(self, source: Source) -> Iterable[Document]:
-        '''
-        Given a CSV source file, returns an iterable of extracted documents.
 
-        Parameters:
-            source: the source file to extract. This can be a string with the path to
-                the file, or a tuple with a path and a dictionary containing metadata.
-        
-        Returns:
-            an iterable of document dictionaries. Each of these is a dictionary,
-                where the keys are names of this Reader's `fields`, and the values
-                are based on the extractor of each field.
-        '''
-
+    def validate(self):
         # make sure the field size is as big as the system permits
         csv.field_size_limit(sys.maxsize)
         self._reject_extractors(extract.XML)
 
-        return super().source2dicts(source)
 
     @contextmanager
     def data_from_file(self, path: str):

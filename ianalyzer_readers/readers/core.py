@@ -151,6 +151,8 @@ class Reader(object):
                 classes. It will raise an error by default.
         '''
 
+        self.validate()
+
         data, metadata = self.data_and_metadata_from_source(source)
 
         if isinstance(data, AbstractContextManager):
@@ -232,6 +234,16 @@ class Reader(object):
             for doc in documents:
                 writer.writerow(doc)
 
+
+    def validate(self):
+        '''
+        Validate that the reader is configured properly.
+
+        This is a good place to check subclass parameters. A common use case is use 
+        _reject_extractors to raise an error if any fields use unsupported extractor
+        types.
+        '''
+        pass
 
     def _reject_extractors(self, *inapplicable_extractors: extract.Extractor):
         '''

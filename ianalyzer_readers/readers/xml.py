@@ -6,12 +6,10 @@ Extraction is based on BeautifulSoup.
 
 import bs4
 import logging
-from os.path import isfile
-from typing import Dict, Iterable, Tuple, List
-from contextlib import AbstractContextManager
+from typing import Dict, Iterable, List
 
 from .. import extract
-from .core import Reader, Source, Document, Field
+from .core import Reader, Document, Field
 from ..xml_tag import CurrentTag, resolve_tag_specification, TagSpecification
 
 
@@ -73,23 +71,10 @@ class XMLReader(Reader):
         the document.
     '''
 
-    def source2dicts(self, source: Source) -> Iterable[Document]:
-        '''
-        Given an XML source file, returns an iterable of extracted documents.
 
-        Parameters:
-            source: the source file to extract. This can be a string with the path to
-                the file, or a tuple with a path and a dictionary containing metadata.
-        
-        Returns:
-            an iterable of document dictionaries. Each of these is a dictionary,
-                where the keys are names of this Reader's `fields`, and the values
-                are based on the extractor of each field.
-        '''
+    def validate(self):
         # Make sure that extractors are sensible
         self._reject_extractors(extract.CSV)
-        return super().source2dicts(source)
-
 
     def iterate_data(self, data: bs4.BeautifulSoup, metadata: Dict) -> Iterable[Document]:
         # split fields that read an external file from regular fields
