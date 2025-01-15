@@ -158,7 +158,8 @@ class Reader(object):
                 for document in self.iterate_data(data, metadata):
                     yield document
         else:
-            return self.iterate_data(data, metadata)
+            for doc in self.iterate_data(data, metadata):
+                yield doc
 
 
     def data_and_metadata_from_source(self, source: Source) -> Tuple[Generator[Any, None, None], Dict]:
@@ -187,7 +188,7 @@ class Reader(object):
 
 
     def iterate_data(self, data: Any, metadata: Dict) -> Iterable[Document]:
-        pass
+        raise NotImplemented('Data iteration is not implemented')
 
 
     def documents(self, sources:Iterable[Source] = None) -> Iterable[Document]:
