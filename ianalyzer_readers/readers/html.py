@@ -6,11 +6,11 @@ BeautifulSoup to parse files.
 '''
 
 from .. import extract
-from .core import Source, Document
+from .core import Document
 from .xml import XMLReader
 import bs4
 import logging
-from typing import Iterable
+from typing import Iterable, Dict
 
 logger = logging.getLogger()
 
@@ -25,40 +25,30 @@ class HTMLReader(XMLReader):
     In addition to generic extractor classes, this reader supports the `XML` extractor.
     '''
 
-    def source2dicts(self, source: Source) -> Iterable[Document]:
-        '''
-        Given an HTML source file, returns an iterable of extracted documents.
-
-        Parameters:
-            source: the source file to extract. This can be a string with the path to
-                the file, or a tuple with a path and a dictionary containing metadata.
-        
-        Returns:
-            an iterable of document dictionaries. Each of these is a dictionary,
-                where the keys are names of this Reader's `fields`, and the values
-                are based on the extractor of each field.
-        '''
-        (filename, metadata) = source
-
+    def validate(self):
         self._reject_extractors(extract.CSV)
 
-        # Loading HTML
+
+    def data_from_file(self, filename: str) -> bs4.BeautifulSoup:
         logger.info('Reading HTML file {} ...'.format(filename))
         with open(filename, 'rb') as f:
             data = f.read()
         # Parsing HTML
         soup = bs4.BeautifulSoup(data, 'html.parser')
         logger.info('Loaded {} into memory ...'.format(filename))
+        return soup
+    
 
+    def iterate_data(self, data: bs4.BeautifulSoup, metadata: Dict) -> Iterable[Document]:
         # Extract fields from soup
         tag0 = self.tag_toplevel
         tag = self.tag_entry
 
-        bowl = tag0.find_next_in_soup(soup) if tag0 else soup
+        bowl = tag0.find_next_in_soup(data) if tag0 else data
 
         # if there is a entry level tag; with html this is not always the case
         if bowl and tag:
-            for i, spoon in enumerate(tag.find_in_soup(soup)):
+            for i, spoon in enumerate(tag.find_in_soup(data)):
                 # yield
                 yield {
                     field.name: field.extractor.apply(
@@ -77,7 +67,7 @@ class HTMLReader(XMLReader):
                     # The extractor is put to work by simply throwing at it
                     # any and all information it might need
                     soup_top='',
-                    soup_entry=soup,
+                    soup_entry=data,
                     metadata=metadata,
                 ) for field in self.fields if not field.skip
             }
