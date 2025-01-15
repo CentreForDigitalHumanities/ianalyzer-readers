@@ -5,11 +5,11 @@ Extraction is based on the [rdflib library](https://rdflib.readthedocs.io/en/sta
 '''
 
 import logging
-from typing import Iterable, Union
+from typing import Iterable, Union, Dict
 
 from rdflib import BNode, Graph, Literal, URIRef
 
-from .core import Reader, Document, Source
+from .core import Reader, Document
 import ianalyzer_readers.extract as extract
 
 logger = logging.getLogger('ianalyzer-readers')
@@ -22,49 +22,32 @@ class RDFReader(Reader):
     see [rdflib parsers](https://rdflib.readthedocs.io/en/stable/plugin_parsers.html).
     '''
 
-    def source2dicts(self, source: Source) -> Iterable[Document]:
-        '''
-        Given a RDF source file, returns an iterable of extracted documents.
-
-        Parameters:
-            source: the source file to extract. This can be a string of the file path, or a tuple of the file path and metadata.
-
-        Returns:
-            an iterable of document dictionaries. Each of these is a dictionary,
-                where the keys are names of this Reader's `fields`, and the values
-                are based on the extractor of each field.
-        '''
+    def validate(self):
         self._reject_extractors(extract.CSV, extract.XML)
-        
-        if type(source) == bytes:
-            raise Exception('The current reader cannot handle sources of bytes type, provide a file path as string instead')
-        try:
-            (filename, metadata) = source
-        except ValueError:
-            filename = source
-            metadata = None
 
-        logger.info(f"parsing {filename}")
-        g = self.parse_graph_from_filename(filename)
-        
-        document_subjects = self.document_subjects(g)
-        for subject in document_subjects:
-            yield self._document_from_subject(g, subject, metadata)
-    
-    def parse_graph_from_filename(self, filename: str) -> Graph:
+
+    def data_from_file(self, path) -> Graph:
         ''' Read a RDF file as indicated by source, return a graph 
         Override this function to parse multiple source files into one graph
 
         Parameters:
-            filename: the name of the file to be parsed
+            path: the name of the file to be parsed
         
         Returns:
             rdflib Graph object
         '''
+        logger.info(f"parsing {path}")
         g = Graph()
-        g.parse(filename)
+        g.parse(path)
         return g
-            
+
+
+    def iterate_data(self, data: Graph, metadata: Dict) -> Iterable[Document]:
+        document_subjects = self.document_subjects(data)
+        for subject in document_subjects:
+            yield self._document_from_subject(data, subject, metadata)
+
+
     def document_subjects(self, graph: Graph) -> Iterable[Union[BNode, Literal, URIRef]]:
         ''' Override this function to return all subjects (i.e., first part of RDF triple) 
         with which to search for data in the RDF graph.
