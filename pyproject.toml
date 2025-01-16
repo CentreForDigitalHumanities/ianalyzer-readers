@@ -19,7 +19,7 @@ dependencies = [
   "rdflib",
 ]
 
-description = "Utilities for extracting XML, HTML, CSV and XLSX data with a common interface"
+description = "Utilities for extracting XML, HTML, CSV, XLSX, and RDF data with a common interface"
 readme = "README.md"
 requires-python = ">=3.8"
 classifiers = [
