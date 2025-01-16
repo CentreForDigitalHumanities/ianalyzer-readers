@@ -42,8 +42,7 @@ class Field(object):
         extractor: an Extractor object that defines how this field's data can be
             extracted from source documents.
         required: whether this field is required. The `Reader` class should skip the
-            document is the value for this Field is `None`, though this is not supported
-            for all readers.
+            document is the value for this Field is `None`.
         skip: if `True`, this field will not be included in the results.
     '''
 
