@@ -139,6 +139,15 @@ class Reader:
         '''
         return [field.name for field in self.fields]
 
+
+    @property
+    def _required_field_names(self) -> List[str]:
+        '''
+        A list of the names of all required fields
+        '''
+        return [field.name for field in self.fields if field.required]
+
+
     def sources(self, **kwargs) -> Iterable[Source]:
         '''
         Obtain source files for the Reader.
@@ -176,10 +185,12 @@ class Reader:
         if isinstance(data, AbstractContextManager):
             with data as data:
                 for document in self.iterate_data(data, metadata):
-                    yield document
+                    if self._has_required_fields(document):
+                        yield document
         else:
-            for doc in self.iterate_data(data, metadata):
-                yield doc
+            for document in self.iterate_data(data, metadata):
+                if self._has_required_fields(document):
+                    yield document
 
 
     def data_and_metadata_from_source(self, source: Source) -> Tuple[Any, Dict]:
@@ -361,3 +372,13 @@ class Reader:
             if isinstance(field.extractor, inapplicable_extractors):
                 raise RuntimeError(
                     "Specified extractor method cannot be used with this type of data")
+
+    def _has_required_fields(self, document: Document) -> Iterable[Document]:
+        '''
+        Check whether a document has a value for all fields marked as required.
+        '''
+
+        has_field = lambda field_name: document.get(field_name, None) is not None
+        return all(
+            has_field(field_name) for field_name in self._required_field_names
+        )

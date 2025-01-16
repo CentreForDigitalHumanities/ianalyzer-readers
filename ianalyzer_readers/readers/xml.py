@@ -96,9 +96,6 @@ class XMLReader(Reader):
                 )
                 external_soup = None        
 
-        required_fields = [
-            field.name for field in self.fields if field.required]
-
         # iterate through entries
         top_tag = resolve_tag_specification(self.__class__.tag_toplevel, metadata)
         bowl = top_tag.find_next_in_soup(data)
@@ -129,8 +126,7 @@ class XMLReader(Reader):
 
                 # yield the union of external fields and document fields
                 field_dict.update(external_dict)
-                if all(field_name in field_dict for field_name in required_fields):
-                    yield field_dict
+                yield field_dict
         else:
             logger.warning('Top-level tag not found')
 
