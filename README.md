@@ -1,11 +1,11 @@
 # I-analyzer Readers
 
-[![Python package](https://github.com/UUDigitalHumanitieslab/ianalyzer-readers/actions/workflows/python-package.yml/badge.svg)](https://github.com/UUDigitalHumanitieslab/ianalyzer-readers/actions/workflows/python-package.yml)
+[![Python package](https://github.com/CentreForDigitalHumanities/ianalyzer-readers/actions/workflows/python-package.yml/badge.svg)](https://github.com/CentreForDigitalHumanities/ianalyzer-readers/actions/workflows/python-package.yml)
 [![Documentation Status](https://readthedocs.org/projects/ianalyzer-readers/badge/?version=latest)](https://ianalyzer-readers.readthedocs.io/en/latest/?badge=latest)
 
 `ianalyzer-readers` is a python module to extract data from XML, HTML, CSV, XLSX or TTL files.
 
-This module was originally created for [I-analyzer](https://github.com/UUDigitalHumanitieslab/I-analyzer), a web application that extracts data from a variety of datasets, indexes them and presents a search interface. To do this, we wanted a way to extract data from source files without having to write a new script "from scratch" for each dataset, and an API that would work the same regardless of the source file type.
+This module was originally created for [I-analyzer](https://github.com/CentreForDigitalHumanities/I-analyzer), a web application that extracts data from a variety of datasets, indexes them and presents a search interface. To do this, we wanted a way to extract data from source files without having to write a new script "from scratch" for each dataset, and an API that would work the same regardless of the source file type.
 
 The basic usage is that you will use the utilities in this package to create a "reader" class. You specify what your data looks like, and then call the `documents()` method of the reader to get an iterator of documents - where each document is a flat dictionary of key/value pairs.
 

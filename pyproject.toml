@@ -31,7 +31,7 @@ classifiers = [
 ]
 
 [project.urls]
-Repository = "https://github.com/UUDigitalHumanitieslab/I-analyzer"
+Repository = "https://github.com/CentreForDigitalHumanities/ianalyzer-readers"
 Documentation = "https://ianalyzer-readers.readthedocs.io/"
 
 [project.optional-dependencies]
