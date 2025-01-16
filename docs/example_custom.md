@@ -37,9 +37,9 @@ class BibliographyReader(Reader):
 
 ## File discovery
 
-File discovery is normally implemented when you create the Reader class for a specific dataset. Base reader classes, like `XMLReader` and `CSVReader`, don't implement it. If you're creating a base class for a data format, you can skip this step, and leave to to the reader for each dataset.
+File discovery is normally implemented when you create the Reader class for a specific dataset. If you're creating an abstract class for a data format, like the `CSVReader` or `XMLReader`, you can skip this step, and leave it to the reader for each dataset.
 
-In this case, we are writing the reader to handle a specific dataset, so we should describe how to find the data file by implementing `sources()`.
+In this case, our reader is meant to handle a single dataset, so we should describe how to find the data file by implementing `sources()`.
 
 ```python
 from ianalyzer_readers.readers.core import Reader
@@ -51,105 +51,209 @@ class BibliographyReader(Reader):
         yield self.data_directory + '/library.txt'
 ```
 
-## Extracting documents from source files
+There are several options for the output type of sources; in this case, we're providing a file path.
 
-All readers must implement a method `source2dicts(self, source)`. This method takes a source as input (from the output of `sources()`), and returns an iterable of the documents it contains.
+## Extracting file contents
 
-The built-in reader classes all implement this method. This is usually something like:
+To extract documents from a source, a reader must implement two steps:
 
-- open the file and parse it
-- iterate over the file contents to extract each document
-- to extract a document, use the reader's `fields` and apply the `extractor` from each field.
+- extract a data object from a source
+- extracts documents from the data object
 
-This means each reader provides a similar interface with fields, extractors, etc. Technically, however, you are not required to use the `fields` interface. If you want to write a script to return dictionaries directly, you can.
+The format of the data object is up to how you implement the reader; it will depend on how the source data is structures what format makes sense here.
 
-This example will use the reader's `fields` property. We'll use the general structure described above.
+We will start with extracting a data object from a source. There are several methods you can implement here (`data_from_file`, `data_from_bytes`), depending on what source types you which to support. In this case, we know the output of `sources` is a file path, so we need to implement `data_from_file`, which will be called if the source is a file path.
 
-### Reading source files
-
-The input to `source2dicts` is a `Source` object. This can be a string with the path, a tuple with a path and a metadata dictionary, or a binary stream with the file contents. In a generic reader class (like `XMLReader`), the implementation of `sources` is left to the subclass, and so the base class should handle these different output types.
-
-In this case, we created our own implementation of `sources`, so we know that it always returns a string with the path. We don't need to implement other source types.
-
-We can start by adding a method that takes a source object and returns the file contents:
+As our intermediate data format, we will just read the string contents of the file:
 
 ```python
-from ianalyzer_readers.core import Source
+class BibliographyReader(Reader):
+    # ...
+
+    def data_from_file(self, path: string) -> string:
+        f = open(path, 'r')
+        content = f.read()
+        f.close()
+        return content
+```
+
+## Iterating over file contents
+
+We now need a method to iterate over the source data; in this case, a string of the file contents. The `iterate_data` method must be implemented to take this data as input, together with a metadata dictionary, and return an iterable of documents.
+
+```python
+from typing import Iterable, Dict, List
+from ianalyzer_readers.core import Document
 
 class BibliographyReader(Reader):
     # ...
 
-    def _read_source(self, source: Source) -> str:
-        if not isinstance(source, str):
-            raise NotImplementedError()
+    def iterate_data(self, data: str, metadata: Dict) -> Iterable[Document]:
+        line_groups = data.split('\n\n')
+        for index, lines in enumerate(line_groups):
+            mapping = self._mapping_from_lines(lines)
+            yield {
+                field.name: field.extractor.apply(mapping=mapping, metadata=metadata, index=index)
+                for field in self.fields
+            }
 
-        with open(source) as f:
-            return f.read()
+    def _mapping_from_lines(self, lines: List[str]):
+        keys_values = (line.split(': ') for line in lines)
+        return { key: value for key, value in keys_values }
 ```
 
-### Iterate over file contents
+For each field, the reader will create the value by calling `field.extractor.apply`. Note that we provide three named arguments to the extractor, which contain the data that extractors can access. `metadata` and `index` are standardised arguments, which are required to support the `Metadata` and `Order` extractors, respectively. (We can also leave these out, if we don't care about supporting these extractor types.)
 
-
-
-```python
-# ...
-from typing import Iterable
-
-class BibliographyReader(Reader):
-    # ...
-
-    def _items_in_source_content(self, content: str) -> Iterable[str]:
-        return content.split('\n\n')
-```
-
-### Apply field extractors
-
-```python
-# ...
-from typing import Dict
-
-class BibliographyReader(Reader):
-    # ...
-
-    def _document_from_item(self, item: str) -> Dict:
-        lines = item.split('\n')
-        return {
-            field.name: field.extractor.apply(lines=lines)
-            for field in self.fields
-        }
-```
-
-Note that this applies a named argument `lines` to the extractor. Note that from our content, `lines` will contain a list like:
-
-```python
-['Title: Pride and Prejudice', 'Author: Jane Austen', 'Year: 1813']
-```
-
-We still need an extractor designed to handle this kind of data. Extractors are always written to accept any named arguments, and ignore what they don't use.
-
-For example, in order to use the `Metadata` extractor, the reader must pass on a `metadata` argument.
-
-Extractors for a particular data format, like `CSV` or `XML`, all work like this. They expect the reader to pass on specific arguments which they use to extract data.
-
-In this case, we will create a custom extrator that can make sense of the `lines` we provide.
-
-### Implement source2dicts
-
-We can now put together these methods to implement `source2dicts`:
-
-```python
-# ...
-
-class BibliographyReader(Reader):
-    # ...
-
-    def source2dicts(self, source: Source) -> Iterable[Dict]:
-        content = self._read_source(source)
-        items = self._items_in_source_content(content)
-        for item in items:
-            yield self._document_from_item(item)
-```
+We also provide the argument `mapping` which contains the data found in the file, in a structure that makes sense for our data. The `mapping` argument isn't used by any of the extractors provided by this package, but we can write a custom extractor that will use it.
 
 ## Create custom extractor
 
-The `_document_from_item`
+```python
+from typing import Dict
+from ianalyzer_readers.extract import Extractor
+
+class BiblibographyExtractor(Extractor):
+    def __init__(self, key: str) -> None:
+        self.key = key
+
+    def _apply(self, mapping: Dict, *nargs, **kwargs):
+        return mapping.get(self.key, None)
+```
+
+## Define fields
+
+The last thing that is required for a functioning reader is a list of fields. Abstract readers like `CSVReader` typically don't implement fields, but a reader won't function without them.
+
+```python
+from ianalyzer_readers.core import Field
+from ianalyzer_readers.extract import Order, Constant
+
+class BibliographyReader(Reader):
+    # ...
+
+    fields = [
+        Field(
+            name='title',
+            extractor=BibliographyExtractor('Title'),
+        ),
+        Field(
+            name='author',
+            extractor=BibliographyExtractor('Author'),
+        ),
+        Field(
+            name='year',
+            extractor=BibliographyExtractor('Year'),
+        ),
+        Field(
+            name='index',
+            extractor=Order(),
+        ),
+        Field(
+            name='file',
+            extractor=Constant('library.txt'),
+        ),
+    ]
+```
+
+## Complete example
+
+```python
+from typing import Iterable, Dict, List
+
+from ianalyzer_readers.extract import Extractor
+from ianalyzer_readers.readers.core import Reader, Document, Field
+from ianalyzer_readers.extract import Order, Constant
+
+
+class BiblibographyExtractor(Extractor):
+    def __init__(self, key: str) -> None:
+        self.key = key
+
+    def _apply(self, mapping: Dict, *nargs, **kwargs):
+        return mapping.get(self.key, None)
+
+
+class BibliographyReader(Reader):
+    data_directory = '.'
+
+    def sources(self, **kwargs):
+        yield self.data_directory + '/library.txt'
+
+    def data_from_file(self, path: string) -> string:
+        f = open(path, 'r')
+        content = f.read()
+        f.close()
+        return content
+
+    def iterate_data(self, data: str, metadata: Dict) -> Iterable[Document]:
+        line_groups = data.split('\n\n')
+        for index, lines in enumerate(line_groups):
+            mapping = self._mapping_from_lines(lines)
+            yield {
+                field.name: field.extractor.apply(mapping=mapping, metadata=metadata, index=index)
+                for field in self.fields
+            }
+
+    def _mapping_from_lines(self, lines: List[str]):
+        keys_values = (line.split(': ') for line in lines)
+        return { key: value for key, value in keys_values }
+
+    fields = [
+        Field(
+            name='title',
+            extractor=BibliographyExtractor('Title'),
+        ),
+        Field(
+            name='author',
+            extractor=BibliographyExtractor('Author'),
+        ),
+        Field(
+            name='year',
+            extractor=BibliographyExtractor('Year'),
+            transform=int,
+        ),
+        Field(
+            name='index',
+            extractor=Order(),
+        ),
+        Field(
+            name='file',
+            extractor=Constant('library.txt'),
+        ),
+    ]
+```
+
+The `documents()` method of our reader will now return the following output:
+
+```python
+[
+    {
+        'title': 'Pride and Prejudice',
+        'author': 'Jane Austen',
+        'year': 1813,
+        'index': 0,
+        'file': 'library.txt',
+    },
+        {
+        'title': 'Frankenstein, or, the Modern Prometheus',
+        'author': 'Mary Shelley',
+        'year': 1818,
+        'index': 0,
+        'file': 'library.txt',
+    },
+        {
+        'title': 'Moby Dick',
+        'author': 'Herman Melville,
+        'year': 1851,
+        'index': 0,
+        'file': 'library.txt',
+    },
+        {
+        'title': 'Alice in Wonderland',
+        'author': 'Lewis Carroll',
+        'year': 1865,
+        'index': 0,
+        'file': 'library.txt',
+    },
+]
+```
