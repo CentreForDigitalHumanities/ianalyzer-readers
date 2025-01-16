@@ -76,14 +76,14 @@ class HamletReader(XMLReader):
     # ...
 ```
 
-The value is a `Tag` object, which is the way that we describe a tag to look for. We'll see more of this when we extract values for fields below.
+The value is a `Tag` object, which is the way that we describe a query for a tag. We'll see more of this when we extract values for fields below.
 
 ## Defining fields
 
-The `XML` extractor can be used to read data from an XML tree. Conceptually, an XML extractor defines:
+If a field is extracting data from the XML tree, is should use the `XML` extractor. Conceptually, this extractor defines:
 
-1. a starting point to search the tree. This is usually the entry tag, i.e. the `<lines>` element we're currently extracting.
-2. a description of how to move from the starting tag to the one you're interested in. This boils down a list of instructions like "select a child tag `<a>`, then select its parent, then select a sibling `<b>` of that tag". You can search for everything matching this description, or select the first match.
+1. where to start searching the tree. This is usually the document entry point; in this case, a `<lines>` element.
+2. how to move from the starting point to the tag you're interested in. This represents a list of instructions like "select a child tag `<a>`, then select its parent, then select a sibling `<b>` of that tag". You can select all tags that match your query, or select the first match.
 3. instructions to get a _value_ from the the tag(s) you have finally selected.
 
 To make this more concrete, here are some examples of fields and how they can be described in this format.
@@ -96,7 +96,7 @@ To make this more concrete, here are some examples of fields and how they can be
 
 **The character's name:**
 
-1. Start from the document entry.
+1. Start from the document entry (the `<lines>` element).
 2. Stay on this element.
 3. Extract the `character` attribute.
 
@@ -109,6 +109,10 @@ To make this more concrete, here are some examples of fields and how they can be
 We can implement this as follows.
 
 ```python
+from ianalyzer_readers.core import Field
+from ianalyzer_readers.extract import XML
+from ianalyzer_readers.xml_tag import Tag
+
 class HamletReader(XMLReader):
     # ...
 
@@ -122,7 +126,8 @@ class HamletReader(XMLReader):
     character = Field(
         'character',
         XML(
-            attribute='character'
+            # no tags to traverse here
+            attribute='character',
         )
     )
     title = Field(
@@ -130,7 +135,7 @@ class HamletReader(XMLReader):
         XML(
             Tag('meta'),
             Tag('title'),
-            toplevel=True
+            toplevel=True,
         )
     )
 
@@ -203,3 +208,31 @@ Our reader will now return the following output:
     },
 ]
 ```
+
+## Complex tag queries
+
+Each extractor can describe steps to traverse the tree, either from the document entry tag or the top of the document. In the example above, these steps were always `Tag` objects. `Tag` is the most common case, and selects child tags. So for the `lines` fields, we used `Tag('l')` to select the `<l>` children of the `<lines>` element.
+
+The `xml_tag` module provides other kinds of tag queries. For instance, say that we wanted to extract the scene and the act. We can use the `ParentTag` to move up in the tree:
+
+```python
+from ianalyzer_readers.xml_tag import ParentTag
+
+act = Field(
+    name='act',
+    extractor=XML(
+        ParentTag(2),
+        attribute="n"
+    ),
+)
+
+scene = Field(
+    name='scene',
+    extractor=XML(
+        ParentTag(1),
+        attribute="n"
+    ),
+)
+```
+
+See the [XML tags documentation](./api.md#xml-tags) for an overview of all built-in tag queries. Stacking different `Tag` objects can be a powerful tool, but if you need more complex logic to select tags, note that the `TransformTag` allows you to add custom functions.

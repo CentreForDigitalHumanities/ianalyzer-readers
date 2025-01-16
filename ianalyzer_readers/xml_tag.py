@@ -170,7 +170,7 @@ class NextSiblingTag(Tag):
     
 class PreviousTag(Tag):
     '''
-    A Tag that will look in an element's previous siblings.
+    A Tag that will look through tags previous to the current element.
 
     Parameters:
         *args: positional arguments to pass on to `soup.find_all_previous()`
@@ -182,7 +182,7 @@ class PreviousTag(Tag):
     
 class NextTag(Tag):
     '''
-    A Tag that will look in an element's previous siblings.
+    A Tag that will look through tags following the current element.
 
     Parameters:
         *args: positional arguments to pass on to `soup.find_all_next()`
