@@ -1,5 +1,5 @@
 site_name: I-analyzer Readers
-repo_url: https://github.com/UUDigitalHumanitieslab/ianalyzer-readers
+repo_url: https://github.com/CentreForDigitalHumanities/ianalyzer-readers
 plugins:
   - mkdocstrings
 nav:
