@@ -17,8 +17,10 @@ from requests import Response
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger('ianalyzer-readers').setLevel(logging.DEBUG)
 
-SourceType = Union[str, Response, bytes]
-Source = Union[SourceType, Tuple[SourceType, Dict]]
+SourceData = Union[str, Response, bytes]
+'''Type definition of the data types a Reader method can handle.'''
+
+Source = Union[SourceData, Tuple[SourceData, Dict]]
 '''
 Type definition for the source input to some Reader methods.
 
