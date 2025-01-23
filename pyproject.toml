@@ -16,6 +16,8 @@ dependencies = [
   "beautifulsoup4",
   "lxml",
   "openpyxl",
+  "pandas",
+  "requests",
   "rdflib",
 ]
 

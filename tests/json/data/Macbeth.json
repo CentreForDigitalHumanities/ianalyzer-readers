@@ -1,0 +1,61 @@
+{"TITLE":"ACT I",
+"SCENE":[
+  {
+    "TITLE":"SCENE I.  A desert place.",
+    "STAGEDIR":[
+       "Thunder and lightning. Enter three Witches",
+       "Exeunt"
+    ],
+    "SPEECH":[
+       {
+          "SPEAKER":"First Witch",
+          "LINE":[
+             "When shall we three meet again",
+             "In thunder, lightning, or in rain?"
+          ]
+       },
+       {
+          "SPEAKER":"Second Witch",
+          "LINE":[
+             "When the hurlyburly's done,",
+             "When the battle's lost and won."
+          ]
+       },
+       {
+          "SPEAKER":"Third Witch",
+          "LINE":"That will be ere the set of sun."
+       },
+       {
+          "SPEAKER":"First Witch",
+          "LINE":"Where the place?"
+       },
+       {
+          "SPEAKER":"Second Witch",
+          "LINE":"Upon the heath."
+       },
+       {
+          "SPEAKER":"Third Witch",
+          "LINE":"There to meet with Macbeth."
+       },
+       {
+          "SPEAKER":"First Witch",
+          "LINE":"I come, Graymalkin!"
+       },
+         {
+            "SPEAKER":"Second Witch",
+            "LINE":"Paddock calls."
+         },
+         {
+            "SPEAKER":"Third Witch",
+            "LINE":"Anon."
+         },
+      {
+        "SPEAKER":"ALL",
+        "LINE":[
+           "Fair is foul, and foul is fair:",
+           "Hover through the fog and filthy air."
+        ]
+      }
+    ]
+  }]
+}

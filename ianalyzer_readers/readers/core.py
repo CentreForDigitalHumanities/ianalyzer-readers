@@ -12,18 +12,25 @@ from typing import List, Iterable, Dict, Any, Union, Tuple, Optional
 import logging
 import csv
 
-logging.basicConfig(level=logging.WARNING)
-logging.getLogger('ianalyzer-readers').setLevel(logging.DEBUG)
+from requests import Response
 
-Source = Union[str, Tuple[Union[str, bytes], Dict], bytes]
+logging.basicConfig(level=logging.WARNING)
+logger = logging.getLogger('ianalyzer-readers').setLevel(logging.DEBUG)
+
+SourceData = Union[str, Response, bytes]
+'''Type definition of the data types a Reader method can handle.'''
+
+Source = Union[SourceData, Tuple[SourceData, Dict]]
 '''
 Type definition for the source input to some Reader methods.
 
 Sources are either:
 
 - a string with the path to a filename
-- a tuple containing a path to a filename, and a dictionary with metadata
-- binary data with the file contents. This is not supported on all Reader subclasses.
+- binary data with the file contents. This is not supported on all Reader subclasses
+- a requests.Response
+- a tuple of one of the above, and a dictionary with metadata
+
 '''
 
 Document = Dict[str, Any]

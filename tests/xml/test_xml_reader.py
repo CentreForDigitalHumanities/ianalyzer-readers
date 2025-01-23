@@ -1,5 +1,7 @@
 import os
 
+import requests
+
 from ianalyzer_readers.readers.xml import XMLReader
 from ianalyzer_readers.readers.core import Field
 from ianalyzer_readers.extract import XML
@@ -43,6 +45,16 @@ class HamletXMLReader(XMLReader):
     )
 
     fields = [title, character, lines]
+
+url_list = ['mock_path']
+
+
+class HamletXMLResponseReader(HamletXMLReader):
+    def sources(self, **kwargs):
+        for document_url in url_list:
+            response = requests.get(document_url)
+            yield response
+
 
 target_documents = [
     {
@@ -90,6 +102,25 @@ target_documents = [
 
 def test_xml_reader():
     reader = HamletXMLReader()
+    docs = reader.documents()
+
+    for doc, target in zip(docs, target_documents):
+        assert doc == target
+
+
+class MockResponse(requests.Response):
+
+    @property
+    def text(self):
+        test_directory = os.path.dirname(__file__)
+        filename = os.path.join(test_directory, 'data', 'hamlet.xml')
+        with open(filename, "r") as f:
+            return f.read()
+
+
+def test_xml_response_reader(monkeypatch):
+    monkeypatch.setattr(requests, "get", lambda x: MockResponse())
+    reader = HamletXMLResponseReader()
     docs = reader.documents()
 
     for doc, target in zip(docs, target_documents):
