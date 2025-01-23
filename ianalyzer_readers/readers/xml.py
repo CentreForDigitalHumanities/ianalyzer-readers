@@ -184,9 +184,10 @@ class XMLReader(Reader):
             filename = None
             metadata = {}
         else:
-            try:
+            if isinstance(source[0], str):
+                filename = source[0]
                 soup = self._soup_from_xml(filename)
-            except Exception:
+            else:
                 filename = None
                 if isinstance(source[0], bytes):
                     soup = self._soup_from_data(source[0])
