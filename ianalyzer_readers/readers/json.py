@@ -107,7 +107,7 @@ class JSONReader(Reader):
         Returns:
             list of documents
         """
-        if type(source) == tuple:
+        if isinstance(source, tuple):
             metadata = source[1]
             json_data = self._get_json_data(source[0])
         else:
@@ -137,9 +137,9 @@ class JSONReader(Reader):
         if isfile(source):
             with open(source, "r") as f:
                 return json.load(f)
-        elif type(source) == Response:
+        elif isinstance(source, Response):
             return source.json()
-        elif type(source) == bytes:
+        elif isinstance(source, bytes):
             return json.loads(source)
         else:
             raise Exception("Unexpected source type for JSON Reader")

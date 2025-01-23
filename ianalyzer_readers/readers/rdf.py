@@ -35,8 +35,8 @@ class RDFReader(Reader):
                 are based on the extractor of each field.
         '''
         self._reject_extractors(extract.CSV, extract.XML)
-        
-        if type(source) == bytes:
+
+        if isinstance(source, bytes):
             raise Exception('The current reader cannot handle sources of bytes type, provide a file path as string instead')
         try:
             (filename, metadata) = source
@@ -45,12 +45,14 @@ class RDFReader(Reader):
             metadata = None
 
         logger.info(f"parsing {filename}")
-        g = self.parse_graph_from_filename(filename)
-        
+        g = self.parse_graph_from_filename(
+            filename
+        )  # TODO: we could also allow Response as source data here, but that would mean the response would also need to include information of the data format, see [this example](https://github.com/RDFLib/rdflib/blob/4.1.2/rdflib/graph.py#L209)
+
         document_subjects = self.document_subjects(g)
         for subject in document_subjects:
             yield self._document_from_subject(g, subject, metadata)
-    
+
     def parse_graph_from_filename(self, filename: str) -> Graph:
         ''' Read a RDF file as indicated by source, return a graph 
         Override this function to parse multiple source files into one graph
@@ -64,7 +66,7 @@ class RDFReader(Reader):
         g = Graph()
         g.parse(filename)
         return g
-            
+
     def document_subjects(self, graph: Graph) -> Iterable[Union[BNode, Literal, URIRef]]:
         ''' Override this function to return all subjects (i.e., first part of RDF triple) 
         with which to search for data in the RDF graph.
