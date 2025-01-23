@@ -22,16 +22,16 @@ class JSONReader(Reader):
     The reader can either be used on a collection of JSON files (`single_document=True`), in which each file represents a document,
     or for a JSON file containing lists of documents.
 
-    If the attributes `record_path` and `meta` are set, they are used as arguments to [pandas.json_normalize](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.json_normalize.html) to unnest the JSON data
+    If the attributes `record_path` and `meta` are set, they are used as arguments to [pandas.json_normalize](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.json_normalize.html) to unnest the JSON data.
 
     Attributes:
         single_document: indicates whether the data is organized such that a file represents a single document
-        record_path: a keyword or list of keywords by which a list of documents can be extracted from a large JSON file; irrelevant if `single_document = True`
-        meta: a list of keywords, or list of lists of keywords, by which metadata for each document can be located; irrelevant if `single_document = True`
+        record_path: a path or list of paths by which a list of documents can be extracted from a large JSON file; irrelevant if `single_document = True`
+        meta: a list of paths, or list of lists of paths, by which metadata common for all documents can be located; irrelevant if `single_document = True`
     """
 
     Examples:
-        ##### Multiple documents in one file:
+        ### Multiple documents in one file:
         ```python
         example_data = {
             'path': {
@@ -53,11 +53,19 @@ class JSONReader(Reader):
 
             speech = Field('speech', JSON('speech'))
             character = Field('character', JSON('character'))
-            sketch = Field('sketch', JSON('path.sketch')) # field name results from paths in `meta` array, separated by a dot
+            sketch = Field('sketch', JSON('path.sketch'))
             episode = Field('episode', JSON('path.episode'))
         ```
+        To define the paths used to extract the field values, consider the dataformat the `pandas.json_normalize` creates:
+        a table with each row representing a document, and columns corresponding to paths, either relative to documents within `record_path`,
+        or relative to the top level (`meta`), with list of paths indicated by dots.
+        ```csv
+        row,speech,character,path.sketch,path.episode
+        0,"I will not buy this record. It is scratched.","tourist","Hungarian Phrasebook",25
+        1,"No sir. This is a tobacconist's.","tobacconist","Hungarian Phrasebook",25
+        ```
 
-        ##### Single document per file:
+        ### Single document per file:
         ```python
         example_data = {
             'sketch': 'Hungarian Phrasebook',
