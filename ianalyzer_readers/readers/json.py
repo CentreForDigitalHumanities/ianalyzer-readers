@@ -6,13 +6,11 @@ or multiple files with one document each, which use the generic Python json pars
 '''
 
 import json
-from os.path import isfile
-from typing import Iterable, List, Optional, Union
+from typing import List, Optional, Union
 
 from pandas import json_normalize
-from requests import Response
 
-from .core import Reader, Document, Source
+from .core import Reader
 import ianalyzer_readers.extract as extract
 
 class JSONReader(Reader):
@@ -105,49 +103,38 @@ class JSONReader(Reader):
     if it is in a different path than `record_path`. Only relevant if `single_document=False`.
     '''
 
-    def source2dicts(self, source: Source, *nargs, **kwargs) -> Iterable[Document]:
-        """
-        Given a Python dictionary, returns an iterable of extracted documents.
+    def validate(self):
+        self._reject_extractors(extract.XML, extract.CSV, extract.RDF)
 
-        Parameters:
-            source: the input data
 
-        Returns:
-            list of documents
-        """
-        if isinstance(source, tuple):
-            metadata = source[1]
-            json_data = self._get_json_data(source[0])
-        else:
-            metadata = None
-            json_data = self._get_json_data(source)
-
+    def iterate_data(self, data, metadata):
         if not self.single_document:
             documents = json_normalize(
-                json_data, record_path=self.record_path, meta=self.meta
+                data, record_path=self.record_path, meta=self.meta
             ).to_dict('records')
         else:
-            documents = [json_data]
-
-        self._reject_extractors(extract.XML, extract.CSV, extract.RDF)
+            documents = [data]
 
         for doc in documents:
             field_dict = {
                 field.name: field.extractor.apply(
-                    doc, metadata=metadata, *nargs, **kwargs
+                    doc, metadata=metadata,
                 )
                 for field in self.fields
             }
 
             yield field_dict
 
-    def _get_json_data(self, source: Source) -> dict:
-        if isfile(source):
-            with open(source, "r") as f:
-                return json.load(f)
-        elif isinstance(source, Response):
-            return source.json()
-        elif isinstance(source, bytes):
-            return json.loads(source)
-        else:
-            raise Exception("Unexpected source type for JSON Reader")
+
+    def data_from_file(self, path):
+        with open(path, "r") as f:
+            data = json.load(f)
+        return data
+
+
+    def data_from_bytes(self, bytes):
+        return json.loads(bytes)
+    
+
+    def data_from_response(self, response):
+        return response.json()
