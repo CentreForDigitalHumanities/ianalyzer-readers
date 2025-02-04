@@ -313,6 +313,7 @@ class Reader:
             NotImplementedError: this method may be implemented on child classes, but has
                 not default implementation.
         '''
+        raise NotImplementedError('This reader does not support Response input')
 
 
     def iterate_data(self, data: Any, metadata: Dict) -> Iterable[Document]:
