@@ -226,6 +226,8 @@ class Reader:
             data = self.data_from_file(source_data)
         elif isinstance(source, bytes):
             data = self.data_from_bytes(source_data)
+        elif isinstance(source, Response):
+            data = self.data_from_response(source_data)
         else:
             raise TypeError(f'Unknown source type: {type(source_data)}')
 
@@ -273,15 +275,14 @@ class Reader:
 
         The return type depends on how the reader is implemented, but will usually be some
         kind of object that represents structured file contents. It serves as the input
-        to `self.iterate_data`.
-
-        Like `self.data_from_file`, this method may also return a context manager.      
+        to `self.iterate_data`.  
 
         Parameters:
             bytes: byte contents of the source
         
         Returns:
-            A data object. The type depends on the reader implementation.
+            A data object. The type depends on the reader implementation. This may also
+                be a context manager.
         
         Raises:
             NotImplementedError: this method may be implemented on child classes, but
@@ -289,6 +290,27 @@ class Reader:
         '''
         
         raise NotImplementedError('This reader does not support bytes input')
+
+
+    def data_from_response(self, response: Response) -> Any:
+        '''
+        Extract data from an HTTP response.
+
+        The return type depends on how the reader is implemented, but will usually be some
+        kind of object that represents structured file contents. It serves as the input
+        to `self.iterate_data`.
+
+        Parameters:
+            response: HTTP response object
+        
+        Returns:
+            A data object. The type depends on the reader implementation. This may also
+                be a context manager.
+        
+        Raises:
+            NotImplementedError: this method may be implemented on child classes, but has
+                not default implementation.
+        '''
 
 
     def iterate_data(self, data: Any, metadata: Dict) -> Iterable[Document]:
