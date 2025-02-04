@@ -79,7 +79,6 @@ class CSVReader(Reader):
     def iterate_data(self, data: csv.DictReader, metadata) -> Iterable[Document]:
         document_id = None
         rows = []
-        index = 0
         for row in data:
             is_new_document = True
 
@@ -94,10 +93,9 @@ class CSVReader(Reader):
                     document_id = identifier
 
             if is_new_document and rows:
-                yield {'rows': rows, 'metadata': metadata, 'index': index}
+                yield {'rows': rows, 'metadata': metadata}
                 rows = [row]
-                index += 1
             else:
                 rows.append(row)
 
-        yield {'rows': rows, 'index': index, 'metadata': metadata}
+        yield {'rows': rows}

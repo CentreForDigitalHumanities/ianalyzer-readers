@@ -116,7 +116,7 @@ class JSONReader(Reader):
             documents = [data]
 
         for doc in documents:
-            yield {'data': doc, 'metadata': metadata}
+            yield {'data': doc}
 
 
     def data_from_file(self, path):

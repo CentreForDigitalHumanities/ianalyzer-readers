@@ -47,7 +47,7 @@ class RDFReader(Reader):
     def iterate_data(self, data: Graph, metadata: Dict) -> Iterable[Document]:
         document_subjects = self.document_subjects(data)
         for subject in document_subjects:
-            yield {'graph': data, 'subject': subject, 'metadata': metadata}
+            yield {'graph': data, 'subject': subject}
 
 
     def document_subjects(self, graph: Graph) -> Iterable[Union[BNode, Literal, URIRef]]:

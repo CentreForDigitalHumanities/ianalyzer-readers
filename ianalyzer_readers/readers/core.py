@@ -190,13 +190,15 @@ class Reader:
 
         if isinstance(data, AbstractContextManager):
             with data as data:
-                for document_data in self.iterate_data(data, metadata):
-                    document = self.extract_document(document_data)
+                for index, document_data in enumerate(self.iterate_data(data, metadata)):
+                    document_data.update({'metadata': metadata, 'index': index})
+                    document = self.extract_document(**document_data)
                     if self._has_required_fields(document):
                         yield document
         else:
-            for document_data in self.iterate_data(data, metadata):
-                document = self.extract_document(document_data)
+            for index, document_data in enumerate(self.iterate_data(data, metadata)):
+                document_data.update({'metadata': metadata, 'index': index})
+                document = self.extract_document(**document_data)
                 if self._has_required_fields(document):
                     yield document
 
@@ -336,12 +338,15 @@ class Reader:
         raise NotImplementedError('Data iteration is not implemented')
 
 
-    def extract_document(self, document_data: Dict[str, Any]) -> Document:
+    def extract_document(
+            self,
+            **kwargs
+        ) -> Document:
         '''
         Extract each field of a document, based on the raw data for the document
         '''
         return {
-            field.name: field.extractor.apply(**document_data)
+            field.name: field.extractor.apply(**kwargs)
             for field in self.fields
             if not field.skip
         }

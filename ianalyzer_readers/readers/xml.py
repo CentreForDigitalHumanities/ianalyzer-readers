@@ -87,19 +87,17 @@ class XMLReader(Reader):
         if bowl:
             entry_tag = resolve_tag_specification(self.__class__.tag_entry, metadata)
             spoonfuls = entry_tag.find_in_soup(bowl)
-            for i, spoon in enumerate(spoonfuls):
+            for spoon in spoonfuls:
                 yield {
                     'soup_top': bowl,
                     'soup_entry': spoon,
-                    'metadata': metadata,
-                    'index': i,
                     'external_soup': external_soup,
                 }
         else:
             logger.warning('Top-level tag not found')
 
 
-    def extract_document(self, document_data) -> Document:
+    def extract_document(self, **document_data) -> Document:
         external_fields = self._external_fields()
         regular_fields = [field for field in self.fields if
             field not in external_fields

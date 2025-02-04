@@ -76,7 +76,6 @@ class XLSXReader(Reader):
 
         header = list(next(data))
 
-        index = 0
         document_id = None
         rows = []
 
@@ -95,11 +94,10 @@ class XLSXReader(Reader):
             document_id = identifier
 
             if is_new_document and rows:
-                yield {'rows': rows, 'metadata': metadata, 'index': index}
+                yield {'rows': rows}
                 rows = [values]
-                index += 1
             else:
                 rows.append(values)
 
         if rows:
-            yield {'rows': rows, 'metadata': metadata, 'index': index}
+            yield {'rows': rows}
