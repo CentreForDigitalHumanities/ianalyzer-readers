@@ -95,32 +95,11 @@ class XLSXReader(Reader):
             document_id = identifier
 
             if is_new_document and rows:
-                yield self._document_from_rows(rows, metadata, index)
+                yield {'rows': rows, 'metadata': metadata, 'index': index}
                 rows = [values]
                 index += 1
             else:
                 rows.append(values)
 
         if rows:
-            yield self._document_from_rows(rows, metadata, index)
-
-    def _document_from_rows(self, rows, metadata, doc_index):
-        '''
-        Extract a single document from a list of row data
-
-        Parameters:
-            rows: a list of row data. Each row is expected to be a dictionary.
-            metadata: a dictionary with file metadata. 
-            doc_index: the index of this document in the source file. The first document
-                extracted from a file should have index 0, the second should have index 1,
-                and so forth.
-        '''
-
-        doc = {
-            field.name: field.extractor.apply(
-                rows=rows, metadata=metadata, index=doc_index
-            )
-            for field in self.fields if not field.skip
-        }
-
-        return doc
+            yield {'rows': rows, 'metadata': metadata, 'index': index}

@@ -94,35 +94,10 @@ class CSVReader(Reader):
                     document_id = identifier
 
             if is_new_document and rows:
-                yield self._document_from_rows(rows, metadata, index)
+                yield {'rows': rows, 'metadata': metadata, 'index': index}
                 rows = [row]
                 index += 1
             else:
                 rows.append(row)
 
-        yield self._document_from_rows(rows, metadata, index)
-
-
-    def _document_from_rows(self, rows: List[Dict], metadata: Dict, doc_index: int) -> Document:
-        '''
-        Extract a single document from a list of rows
-
-        Parameters:
-            rows: a list of row data. Since the CSVReader uses `csv.DictReader`, each row
-                is expected to be a dictionary.
-            metadata: a dictionary with file metadata. 
-            doc_index: the index of this document in the source file. The first document
-                extracted from a file should have index 0, the second should have index 1,
-                and so forth.
-        '''
-
-        doc = {
-            field.name: field.extractor.apply(
-                # The extractor is put to work by simply throwing at it
-                # any and all information it might need
-                rows=rows, metadata = metadata, index=doc_index
-            )
-            for field in self.fields if not field.skip
-        }
-
-        return doc
+        yield {'rows': rows, 'index': index, 'metadata': metadata}

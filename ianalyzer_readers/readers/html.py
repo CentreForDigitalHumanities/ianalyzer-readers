@@ -51,23 +51,34 @@ class HTMLReader(XMLReader):
             for i, spoon in enumerate(tag.find_in_soup(data)):
                 # yield
                 yield {
-                    field.name: field.extractor.apply(
-                        # The extractor is put to work by simply throwing at it
-                        # any and all information it might need
-                        soup_top=bowl,
-                        soup_entry=spoon,
-                        metadata=metadata,
-                        index=i
-                    ) for field in self.fields if not field.skip
+                    'soup_top': bowl,
+                    'soup_entry': spoon,
+                    'metadata': metadata,
+                    'index': i,
                 }
+                # yield {
+                #     field.name: field.extractor.apply(
+                #         # The extractor is put to work by simply throwing at it
+                #         # any and all information it might need
+                #         soup_top=bowl,
+                #         soup_entry=spoon,
+                #         metadata=metadata,
+                #         index=i
+                #     ) for field in self.fields if not field.skip
+                # }
         else:
             # yield all page content
             yield {
-                field.name: field.extractor.apply(
-                    # The extractor is put to work by simply throwing at it
-                    # any and all information it might need
-                    soup_top='',
-                    soup_entry=data,
-                    metadata=metadata,
-                ) for field in self.fields if not field.skip
+                'soup_entry': data,
+                'metadata': metadata,
+                'index': 0,
             }
+            # yield {
+            #     field.name: field.extractor.apply(
+            #         # The extractor is put to work by simply throwing at it
+            #         # any and all information it might need
+            #         soup_top='',
+            #         soup_entry=data,
+            #         metadata=metadata,
+            #     ) for field in self.fields if not field.skip
+            # }

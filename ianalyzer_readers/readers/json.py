@@ -116,14 +116,7 @@ class JSONReader(Reader):
             documents = [data]
 
         for doc in documents:
-            field_dict = {
-                field.name: field.extractor.apply(
-                    doc, metadata=metadata,
-                )
-                for field in self.fields
-            }
-
-            yield field_dict
+            yield {'data': doc, 'metadata': metadata}
 
 
     def data_from_file(self, path):

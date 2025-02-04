@@ -47,7 +47,7 @@ class RDFReader(Reader):
     def iterate_data(self, data: Graph, metadata: Dict) -> Iterable[Document]:
         document_subjects = self.document_subjects(data)
         for subject in document_subjects:
-            yield self._document_from_subject(data, subject, metadata)
+            yield {'graph': data, 'subject': subject, 'metadata': metadata}
 
 
     def document_subjects(self, graph: Graph) -> Iterable[Union[BNode, Literal, URIRef]]:
@@ -62,9 +62,6 @@ class RDFReader(Reader):
             generator or list of nodes
         '''
         return graph.subjects()
-
-    def _document_from_subject(self, graph: Graph, subject: Union[BNode, Literal, URIRef], metadata: dict) -> dict:
-        return {field.name: field.extractor.apply(graph=graph, subject=subject, metadata=metadata) for field in self.fields}
 
 
 def get_uri_value(node: URIRef) -> str:

@@ -190,11 +190,13 @@ class Reader:
 
         if isinstance(data, AbstractContextManager):
             with data as data:
-                for document in self.iterate_data(data, metadata):
+                for document_data in self.iterate_data(data, metadata):
+                    document = self.extract_document(document_data)
                     if self._has_required_fields(document):
                         yield document
         else:
-            for document in self.iterate_data(data, metadata):
+            for document_data in self.iterate_data(data, metadata):
+                document = self.extract_document(document_data)
                 if self._has_required_fields(document):
                     yield document
 
@@ -332,6 +334,12 @@ class Reader:
         '''
         raise NotImplementedError('Data iteration is not implemented')
 
+
+    def extract_document(self, document_data: Dict[str, Any]) -> Document:
+        return {
+            field.name: field.extractor.apply(**document_data)
+            for field in self.fields
+        }
 
     def documents(self, sources:Iterable[Source] = None) -> Iterable[Document]:
         '''

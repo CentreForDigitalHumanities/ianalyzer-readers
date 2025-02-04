@@ -96,6 +96,8 @@ class XMLReader(Reader):
                     'provided in the source metadata'
                 )
                 external_soup = None        
+        else:
+            external_soup = None
 
         # iterate through entries
         top_tag = resolve_tag_specification(self.__class__.tag_toplevel, metadata)
@@ -106,30 +108,48 @@ class XMLReader(Reader):
             spoonfuls = entry_tag.find_in_soup(bowl)
             for i, spoon in enumerate(spoonfuls):
                 # Extract fields from the soup
-                field_dict = {
-                    field.name: field.extractor.apply(
-                        soup_top=bowl,
-                        soup_entry=spoon,
-                        metadata=metadata,
-                        index=i,
-                    ) for field in regular_fields if not field.skip
+
+                yield {
+                    'soup_top': bowl,
+                    'soup_entry': spoon,
+                    'metadata': metadata,
+                    'index': i,
+                    'external_soup': external_soup,
                 }
 
-                if external_fields and external_soup:
-                    metadata.update(field_dict)
-                    external_dict = self._external_source2dict(
-                        external_soup, external_fields, metadata)
-                else:
-                    external_dict = {
-                        field.name: None
-                        for field in external_fields
-                    }
-
-                # yield the union of external fields and document fields
-                field_dict.update(external_dict)
-                yield field_dict
         else:
             logger.warning('Top-level tag not found')
+
+
+    def extract_document(self, document_data):
+        external_fields = [field for field in self.fields if
+            isinstance(field.extractor, extract.XML) and field.extractor.external_file
+        ]
+        regular_fields = [field for field in self.fields if
+            field not in external_fields
+        ]
+
+        field_dict = {
+            field.name: field.extractor.apply(**document_data)
+            for field in regular_fields if not field.skip
+        }
+
+        external_soup = document_data.get('external_soup')
+        metadata = document_data.get('metadata')
+
+        if external_fields and external_soup:
+            metadata.update(field_dict)
+            external_dict = self._external_source2dict(
+                external_soup, external_fields, metadata)
+        else:
+            external_dict = {
+                field.name: None
+                for field in external_fields
+            }
+
+        # yield the union of external fields and document fields
+        field_dict.update(external_dict)
+        return field_dict
 
 
     def _external_source2dict(self, soup, external_fields: List[Field], metadata: Dict):
