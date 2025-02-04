@@ -175,8 +175,7 @@ class Reader:
         Given a source file, returns an iterable of extracted documents.
 
         Parameters:
-            source: the source to extract. (See the Source type description for
-                supported types of sources.)
+            source: Source to extract.
         
         Returns:
             an iterable of document dictionaries. Each of these is a dictionary,
@@ -202,24 +201,19 @@ class Reader:
                     yield document
 
 
-
     def data_and_metadata_from_source(self, source: Source) -> Tuple[Any, Dict]:
         '''
         Extract the data and metadata object from a source.
 
         Parameters:
-            source: the source object. (See the Source type description for supported
-                types.)
+            source: Source to extract.
 
         Returns:
-            A tuple of a data object from which the contents of the source can be
-                extracted, and a metadata dictionary.
+            A tuple with the parsed source data, and the metadata (empty if none was
+                provided).
         '''
-        if isinstance(source, tuple):
-            if len(source) == 2:
-                source_data, metadata = source
-            else:
-                raise ValueError(f'Source is a tuple of unexpected length: {len(source)}')
+        if isinstance(source, tuple) and len(source) == 2:
+            source_data, metadata = source
         else:
             source_data = source
             metadata = {}
@@ -246,15 +240,9 @@ class Reader:
         of data structure from which documents can be extracted. It serves as the input
         to `self.iterate_data`.
 
-        This method can also return a context manager, for example like this:
-
-            @contextmanager
-            def data_from_file(self, path):
-                with open(path, 'r') as f:
-                    yield f
-
-        This is especially useful to iterate over large files in `iterate_data`, without
-        loading the complete file contents in memory.
+        This method can also return a context manager. This is especially useful to
+        iterate over large files in `iterate_data`, without loading the complete file
+        contents in memory.
 
         Tip: if you have implemented `self.data_from_bytes`, this method can probably just
         read the binary contents of the file and call that method.
@@ -275,11 +263,8 @@ class Reader:
 
     def data_from_bytes(self, bytes: bytes) -> Any:
         '''
-        Extract source data from a bytes object.
-
-        The return type depends on how the reader is implemented, but should be some kind
-        of data structure from which documents can be extracted. It serves as the input
-        to `self.iterate_data`.
+        Extract source data from a bytes object. Like `data_from_file`, but with bytes
+        input.
 
         Parameters:
             bytes: byte contents of the source
@@ -298,11 +283,8 @@ class Reader:
 
     def data_from_response(self, response: Response) -> Any:
         '''
-        Extract data from an HTTP response.
-
-        The return type depends on how the reader is implemented, but should be some kind
-        of data structure from which documents can be extracted. It serves as the input
-        to `self.iterate_data`.
+        Extract data from an HTTP response. Like `data_from_file`, but with `Response`
+        input.
 
         Parameters:
             response: HTTP response object
@@ -313,7 +295,7 @@ class Reader:
         
         Raises:
             NotImplementedError: this method may be implemented on child classes, but has
-                not default implementation.
+                no default implementation.
         '''
         raise NotImplementedError('This reader does not support Response input')
 
@@ -322,10 +304,9 @@ class Reader:
         '''
         Iterate parsed source data, return data for each document.
 
-        Per document, this returns the arguments that are passed on to field extractors.
-        These usually cater to a specific extractor type. For example, the `CSVReader`
-        returns an argument `rows` that the `CSV` extractor uses to extract the values
-        for a column.
+        This should reutrn the arguments that are passed on to field extractors per
+        document. These usually cater to a specific extractor type. For example, the
+        `CSVReader` returns an argument `rows`, which is used by the `CSV` extractor.
 
         The core `source2dicts` method will also provide `metadata` and `index` arguments
         to extractors, which you may override by providing them here.

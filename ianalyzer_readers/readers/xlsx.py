@@ -2,9 +2,9 @@ import logging
 import openpyxl
 from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.workbook.workbook import Workbook
-from typing import Iterable, Dict
+from typing import Dict
 
-from .core import Reader, Document, Source
+from .core import Reader
 from .. import extract
 
 logger = logging.getLogger()
