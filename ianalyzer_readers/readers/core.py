@@ -5,7 +5,7 @@ The module defines two classes, `Field` and `Reader`.
 '''
 
 from .. import extract
-from typing import List, Iterable, Dict, Any, Union, Tuple, Optional, Generator
+from typing import List, Iterable, Dict, Any, Union, Tuple, Optional
 import logging
 import csv
 from os.path import isfile
@@ -226,7 +226,7 @@ class Reader:
 
         if isinstance(source_data, str):
             if not isfile(source_data):
-                raise ValueError(f'Invalid file path: {source_data}')
+                raise FileNotFoundError('Invalid file path: {source_data}')
             data = self.data_from_file(source_data)
         elif isinstance(source, bytes):
             data = self.data_from_bytes(source_data)
