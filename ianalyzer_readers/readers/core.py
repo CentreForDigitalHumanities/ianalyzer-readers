@@ -336,9 +336,13 @@ class Reader:
 
 
     def extract_document(self, document_data: Dict[str, Any]) -> Document:
+        '''
+        Extract each field of a document, based on the raw data for the document
+        '''
         return {
             field.name: field.extractor.apply(**document_data)
             for field in self.fields
+            if not field.skip
         }
 
     def documents(self, sources:Iterable[Source] = None) -> Iterable[Document]:
