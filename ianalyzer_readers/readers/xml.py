@@ -108,7 +108,7 @@ class XMLReader(Reader):
             for field in regular_fields if not field.skip
         }
 
-        external_soup = document_data.get('external_soup')
+        external_soup = document_data.get('external_soup', None)
         metadata = document_data.get('metadata')
 
         if external_fields and external_soup:

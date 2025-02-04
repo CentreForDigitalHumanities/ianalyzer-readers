@@ -83,8 +83,8 @@ class Reader:
     describing:
 
     - How to obtain its source files.
-    - What fields each document contains.
-    - How to extract said fields from the source files.
+    - How to parse and iterate over source files.
+    - What fields each document contains, and how to extract them from the source data.
 
     This requires implementing the following attributes/methods:
 
@@ -95,15 +95,16 @@ class Reader:
     - `data_directory` (optional): a string with the path to the directory containing
         the source data. You can use this in the implementation of `sources`; it's not
         used elsewhere.
-    - `data_from_file` and/or `data_from_bytes`: methods that respectively receive a file
-        path or a byte sequence, and return a data object. (The type of the data will
-        depend on how you implement your reader; this could be a parsed graph, a row
-        iterator, etc.). You must implement at least one of these methods to have a
-        functioning reader; if a method is not implemented, the reader won't support that
-        source type (as a value yielded by `sources`).
+    - `data_from_file` `data_from_bytes`, `data_from_response`: methods that respectively
+        receive a file path, a byte sequence, or an HTTP response, and return a data
+        object. (The type of the data will depend on how you implement your reader; this
+        could be a parsed graph, a row iterator, etc.). You must implement at least one of
+        these methods to have a functioning reader; if a method is not implemented, the
+        reader won't support that source type (as output from `sources`).
     - `iterate_data`: method that takes a data object (the output of
-        `data_from_file`/`data_from_bytes`) and a metadata dictionary, and returns an
-        iterable of extracted documents.
+        `data_from_file`/`data_from_bytes`) and a metadata dictionary, iterates over
+        the source data and returns the data that should be passed on to extractors for
+        each document.
     - `validate` (optional): a method that will check the reader configuration. This is
         useful for abstract readers like the `XMLReader`, `CSVReader`, etc., so they
         can verify a child class is implementing attributes correctly.
@@ -241,9 +242,9 @@ class Reader:
         '''
         Extract source data from a filename.
 
-        The return type depends on how the reader is implemented, but will usually be some
-        kind of object that represents structured file contents, from which documents
-        can be extracted. It serves as the input to `self.iterate_data`.
+        The return type depends on how the reader is implemented, but should be some kind
+        of data structure from which documents can be extracted. It serves as the input
+        to `self.iterate_data`.
 
         This method can also return a context manager, for example like this:
 
@@ -276,9 +277,9 @@ class Reader:
         '''
         Extract source data from a bytes object.
 
-        The return type depends on how the reader is implemented, but will usually be some
-        kind of object that represents structured file contents. It serves as the input
-        to `self.iterate_data`.  
+        The return type depends on how the reader is implemented, but should be some kind
+        of data structure from which documents can be extracted. It serves as the input
+        to `self.iterate_data`.
 
         Parameters:
             bytes: byte contents of the source
@@ -299,8 +300,8 @@ class Reader:
         '''
         Extract data from an HTTP response.
 
-        The return type depends on how the reader is implemented, but will usually be some
-        kind of object that represents structured file contents. It serves as the input
+        The return type depends on how the reader is implemented, but should be some kind
+        of data structure from which documents can be extracted. It serves as the input
         to `self.iterate_data`.
 
         Parameters:
@@ -319,7 +320,15 @@ class Reader:
 
     def iterate_data(self, data: Any, metadata: Dict) -> Iterable[Document]:
         '''
-        Iterate documents from source data
+        Iterate parsed source data, return data for each document.
+
+        Per document, this returns the arguments that are passed on to field extractors.
+        These usually cater to a specific extractor type. For example, the `CSVReader`
+        returns an argument `rows` that the `CSV` extractor uses to extract the values
+        for a column.
+
+        The core `source2dicts` method will also provide `metadata` and `index` arguments
+        to extractors, which you may override by providing them here.
 
         Parameters:
             data: The data object from a source. The type depends on the reader
@@ -328,7 +337,9 @@ class Reader:
             metadata: Dictionary containing metadata for the source.
         
         Returns:
-            An iterable of documents extracted from the source data.
+            An iterable of dictionaries. Each iteration will be extracted as a single
+            document. The items in the dictionary are given as arguments to field
+            extractors.
 
         Raises:
             NotImplementedError: This method must be implemented on child classes. It

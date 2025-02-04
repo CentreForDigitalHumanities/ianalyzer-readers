@@ -50,12 +50,7 @@ class HTMLReader(XMLReader):
         if bowl and tag:
             for spoon in tag.find_in_soup(data):
                 # yield
-                yield {
-                    'soup_top': bowl,
-                    'soup_entry': spoon,
-                }
+                yield {'soup_top': bowl, 'soup_entry': spoon}
         else:
             # yield all page content
-            yield {
-                'soup_entry': data,
-            }
+            yield {'soup_entry': data}

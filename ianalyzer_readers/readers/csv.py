@@ -5,7 +5,7 @@ Extraction is based on python's `csv` library.
 '''
 
 from .. import extract
-from typing import List, Dict, Iterable
+from typing import Iterable
 from .core import Reader, Document
 import csv
 import sys
