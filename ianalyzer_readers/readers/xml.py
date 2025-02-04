@@ -112,19 +112,15 @@ class XMLReader(Reader):
         metadata = document_data.get('metadata')
 
         if external_fields and external_soup:
-            metadata.update(field_dict)
             external_dict = self._external_source2dict(
-                external_soup, external_fields, metadata)
+                external_soup, external_fields, metadata | field_dict)
         else:
             external_dict = {
-                field.name: None
-                for field in external_fields
-                if not field.skip
+                field.name: None for field in external_fields if not field.skip
             }
 
         # yield the union of external fields and document fields
-        field_dict.update(external_dict)
-        return field_dict
+        return field_dict | external_dict
 
 
     def _external_fields(self) -> List[Field]:
@@ -162,13 +158,13 @@ class XMLReader(Reader):
         if not bowl:
             logger.warning(
                 'Top-level tag not found in `{}`'.format(metadata['external_file']))
-            return {field.name: None for field in external_fields}
+            return {field.name: None for field in external_fields if not field.skip}
 
         return {
             field.name: field.extractor.apply(
                 soup_top=bowl, soup_entry=bowl, metadata=metadata
             )
-            for field in external_fields
+            for field in external_fields if not field.skip
         }
 
 
