@@ -6,7 +6,7 @@ Extraction is based on BeautifulSoup.
 
 import bs4
 import logging
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, Optional
 from requests import Response
 
 from .. import extract
@@ -78,26 +78,7 @@ class XMLReader(Reader):
         self._reject_extractors(extract.CSV)
 
     def iterate_data(self, data: bs4.BeautifulSoup, metadata: Dict) -> Iterable[Document]:
-        # split fields that read an external file from regular fields
-        external_fields = [field for field in self.fields if
-            isinstance(field.extractor, extract.XML) and field.extractor.external_file
-        ]
-        regular_fields = [field for field in self.fields if
-            field not in external_fields
-        ]
-
-        # extract information from external xml files first, if applicable
-        if len(external_fields):
-            if  metadata and 'external_file' in metadata:
-                external_soup = self.data_from_file(metadata['external_file'])
-            else:
-                logger.warn(
-                    'Some fields have external_file property, but no external file is '
-                    'provided in the source metadata'
-                )
-                external_soup = None        
-        else:
-            external_soup = None
+        external_soup = self._external_soup(metadata)
 
         # iterate through entries
         top_tag = resolve_tag_specification(self.__class__.tag_toplevel, metadata)
@@ -107,8 +88,6 @@ class XMLReader(Reader):
             entry_tag = resolve_tag_specification(self.__class__.tag_entry, metadata)
             spoonfuls = entry_tag.find_in_soup(bowl)
             for i, spoon in enumerate(spoonfuls):
-                # Extract fields from the soup
-
                 yield {
                     'soup_top': bowl,
                     'soup_entry': spoon,
@@ -116,15 +95,12 @@ class XMLReader(Reader):
                     'index': i,
                     'external_soup': external_soup,
                 }
-
         else:
             logger.warning('Top-level tag not found')
 
 
-    def extract_document(self, document_data):
-        external_fields = [field for field in self.fields if
-            isinstance(field.extractor, extract.XML) and field.extractor.external_file
-        ]
+    def extract_document(self, document_data) -> Document:
+        external_fields = self._external_fields()
         regular_fields = [field for field in self.fields if
             field not in external_fields
         ]
@@ -145,11 +121,35 @@ class XMLReader(Reader):
             external_dict = {
                 field.name: None
                 for field in external_fields
+                if not field.skip
             }
 
         # yield the union of external fields and document fields
         field_dict.update(external_dict)
         return field_dict
+
+
+    def _external_fields(self) -> List[Field]:
+        '''
+        Subset of the reader's fields that rely on an external XML file.
+        '''
+        return [field for field in self.fields if
+            isinstance(field.extractor, extract.XML) and field.extractor.external_file
+        ]
+
+
+    def _external_soup(self, metadata: Dict) -> Optional[bs4.BeautifulSoup]:
+        '''
+        Returns parsed tree for the external XML file, if applicable
+        '''
+        if any(self._external_fields()):
+            if metadata and 'external_file' in metadata:
+                return self.data_from_file(metadata['external_file'])
+            else:
+                logger.warning(
+                    'Some fields have external_file property, but no external file is '
+                    'provided in the source metadata'
+                )
 
 
     def _external_source2dict(self, soup, external_fields: List[Field], metadata: Dict):
