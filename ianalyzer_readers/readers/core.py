@@ -91,7 +91,7 @@ class Reader:
     - `fields`: a list of `Field` instances that describe the fields that will appear in
         documents, and how to extract their value.
     - `sources`: a method that returns an iterable of sources (e.g. file paths), possibly
-        with metadata for each. See the method docstring for details.
+        with metadata for each.
     - `data_directory` (optional): a string with the path to the directory containing
         the source data. You can use this in the implementation of `sources`; it's not
         used elsewhere.
@@ -99,18 +99,17 @@ class Reader:
         receive a file path, a byte sequence, or an HTTP response, and return a data
         object. (The type of the data will depend on how you implement your reader; this
         could be a parsed graph, a row iterator, etc.). You must implement at least one of
-        these methods to have a functioning reader; if a method is not implemented, the
-        reader won't support that source type (as output from `sources`).
+        these methods to have a functioning reader.
     - `iterate_data`: method that takes a data object (the output of
-        `data_from_file`/`data_from_bytes`) and a metadata dictionary, iterates over
-        the source data and returns the data that should be passed on to extractors for
-        each document.
+        `data_from_file`/`data_from_bytes`/`data_from_response`) and a metadata dictionary,
+        iterates over the source data, and returns the data that should be passed on to
+        extractors for each document.
     - `validate` (optional): a method that will check the reader configuration. This is
         useful for abstract readers like the `XMLReader`, `CSVReader`, etc., so they
         can verify a child class is implementing attributes correctly.
 
-    Alternatively, you could override the `source2dicts` method, instead of implementing
-    `data_from_file`, `data_from_bytes`, `iterate_data` and `validate`.
+    Abstract reader types like `CSVReader` usually leave `fields` and `sources`
+    unimplemented.
     '''
 
     @property
