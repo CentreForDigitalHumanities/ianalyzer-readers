@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ianalyzer_readers"
-version = "0.2.2"
+version = "0.2.3"
 authors = [
   {name="Utrecht University, Centre for Digital Humanities - Research Software Lab", email="cdh@uu.nl"}
 ]
@@ -16,10 +16,12 @@ dependencies = [
   "beautifulsoup4",
   "lxml",
   "openpyxl",
+  "pandas",
+  "requests",
   "rdflib",
 ]
 
-description = "Utilities for extracting XML, HTML, CSV and XLSX data with a common interface"
+description = "Utilities for extracting XML, HTML, CSV, XLSX, and RDF data with a common interface"
 readme = "README.md"
 requires-python = ">=3.8"
 classifiers = [
@@ -31,7 +33,7 @@ classifiers = [
 ]
 
 [project.urls]
-Repository = "https://github.com/UUDigitalHumanitieslab/I-analyzer"
+Repository = "https://github.com/CentreForDigitalHumanities/ianalyzer-readers"
 Documentation = "https://ianalyzer-readers.readthedocs.io/"
 
 [project.optional-dependencies]

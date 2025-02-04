@@ -23,8 +23,10 @@ class RDFReader(Reader):
     '''
 
     def validate(self):
-        self._reject_extractors(extract.CSV, extract.XML)
+        self._reject_extractors(extract.CSV, extract.XML, extract.JSON)
 
+
+    # TODO: we could also allow Response as source data here, but that would mean the response would also need to include information of the data format, see [this example](https://github.com/RDFLib/rdflib/blob/4.1.2/rdflib/graph.py#L209)
 
     def data_from_file(self, path) -> Graph:
         ''' Read a RDF file as indicated by source, return a graph 

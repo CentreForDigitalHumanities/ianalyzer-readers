@@ -7,6 +7,7 @@ Extraction is based on BeautifulSoup.
 import bs4
 import logging
 from typing import Dict, Iterable, List
+from requests import Response
 
 from .. import extract
 from .core import Reader, Document, Field
@@ -170,3 +171,7 @@ class XMLReader(Reader):
         Parses content of a xml file
         '''
         return bs4.BeautifulSoup(data, 'lxml-xml')
+
+
+    def data_from_response(self, data: Response) -> bs4.BeautifulSoup:
+        return bs4.BeautifulSoup(data.text, 'lxml-xml')
