@@ -5,11 +5,11 @@ The module defines two classes, `Field` and `Reader`.
 '''
 
 from .. import extract
-from typing import List, Iterable, Dict, Any, Union, Tuple, Optional
+from typing import List, Iterable, Dict, Any, Union, Tuple, Optional, Generator
 import logging
 import csv
 from os.path import isfile
-from contextlib import AbstractContextManager
+from contextlib import AbstractContextManager, nullcontext
 
 from requests import Response
 
@@ -65,7 +65,6 @@ class Field(object):
         self.extractor = extractor
         self.required = required
         self.skip = skip
-
 
 class Reader:
     '''
@@ -189,18 +188,18 @@ class Reader:
         data, metadata = self.data_and_metadata_from_source(source)
 
         if isinstance(data, AbstractContextManager):
-            with data as data:
-                for index, document_data in enumerate(self.iterate_data(data, metadata)):
-                    document_data.update({'metadata': metadata, 'index': index})
-                    document = self.extract_document(**document_data)
-                    if self._has_required_fields(document):
-                        yield document
+            context_manager = data
         else:
-            for index, document_data in enumerate(self.iterate_data(data, metadata)):
-                document_data.update({'metadata': metadata, 'index': index})
+            context_manager = nullcontext(data)
+        
+        with context_manager as data:
+            for index, extracted_data in enumerate(self.iterate_data(data, metadata)):
+                base_data = {'metadata': metadata, 'index': index}
+                document_data = base_data | extracted_data
                 document = self.extract_document(**document_data)
                 if self._has_required_fields(document):
                     yield document
+
 
 
     def data_and_metadata_from_source(self, source: Source) -> Tuple[Any, Dict]:
