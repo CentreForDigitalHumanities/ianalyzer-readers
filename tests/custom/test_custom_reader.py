@@ -2,7 +2,7 @@
 This module tests the code in the "custom reader" example in the documentation.
 '''
 
-from typing import Iterable, Dict
+from typing import Iterable, Dict, Optional
 import os
 
 from ianalyzer_readers.extract import Extractor
@@ -15,7 +15,7 @@ class BibliographyExtractor(Extractor):
         super().__init__(**kwargs)
         self.key = key
 
-    def _apply(self, mapping: Dict, **kwargs):
+    def _apply(self, mapping: Optional[Dict] = None, **kwargs):
         return mapping.get(self.key, None)
 
 
@@ -33,12 +33,9 @@ class BibliographyReader(Reader):
 
     def iterate_data(self, data: str, metadata: Dict) -> Iterable[Document]:
         sections = data.split('\n\n')
-        for index, section in enumerate(sections):
+        for section in sections:
             mapping = self._mapping_from_section(section)
-            yield {
-                field.name: field.extractor.apply(mapping=mapping, metadata=metadata, index=index)
-                for field in self.fields
-            }
+            yield {'mapping': mapping}
 
     def _mapping_from_section(self, section: str):
         lines = section.split('\n')
