@@ -2,7 +2,7 @@
 
 `ianalyzer_readers` includes several subclasses of `Reader` to handle common data formats, such as the `XMLReader` and `CSVReader`. If you need to handle a new or unique data format, it may be useful to create a new `Reader` subclass.
 
-Note that the `Reader` class provides very little functionality by itself, so creating a custom `Reader` will save little work compared to writing a script from scratch. However, the `Reader` class is used to define a shared interface between different readers, so you can use it to create something compatible with other readers.
+Creating a custom reader class will require more work than using a class like `CSVReader`, and will require more understanding of how this package works. You may find that, for your specific use case, creating a reader requires more work than writing a complete script from scratch. The main reason to use the `Reader` framework is to make something compatible with other reader types.
 
 This example will demonstrate how you could implement a custom reader.
 
@@ -39,7 +39,7 @@ class BibliographyReader(Reader):
 
 File discovery is normally implemented when you create the Reader class for a specific dataset. If you're creating an abstract class for a data format, like the `CSVReader` or `XMLReader`, you can skip this step, and leave it to the reader for each dataset.
 
-In this case, our reader is meant to handle a single dataset, so we should describe how to find the data file by implementing `sources()`.
+In this case, our reader is meant to handle a single dataset, so we should describe how to find the data file by implementing `sources()`. This just needs to yield a single file.
 
 ```python
 from ianalyzer_readers.readers.core import Reader
@@ -58,13 +58,17 @@ There are several options for the output type of sources; in this case, we're pr
 To extract documents from a source, a reader must implement two steps:
 
 - extract a data object from a source
-- extracts documents from the data object
+- iterate over the data object and return the available data per document
 
-The format of the data object is up to how you implement the reader; it will depend on how the source data is structures what format makes sense here.
+The format of the data object is up to how you implement the reader; it will depend on how the source data is structured what format makes sense here. It could be a graph, an iterator, a dataframe, or something else entirely.
 
-We will start with extracting a data object from a source. There are several methods you can implement here (`data_from_file`, `data_from_bytes`), depending on what source types you which to support. In this case, we know the output of `sources` is a file path, so we need to implement `data_from_file`, which will be called if the source is a file path.
+You will then need a method that iterates over this data format to get a set of documents. Per document it should return the data that will be made available to field extractors.
 
-As our intermediate data format, we will just read the string contents of the file:
+This is quite an abstract description, so let's see how it works in practice.
+
+First, we need to extract a data object from a source. There are several methods you can implement here (`data_from_file`, `data_from_bytes`, `data_from_response`), depending on what source types you wish to support. In this case, we know the output of `sources` is a file path, so we need to implement `data_from_file`, and we can leave the others as-is.
+
+The output of `data_from_file` should be some intermediate data format; we will just return the string contents of the file.
 
 ```python
 class BibliographyReader(Reader):
@@ -79,7 +83,15 @@ class BibliographyReader(Reader):
 
 ## Iterating over file contents
 
-We now need a method to iterate over the source data; in this case, a string of the file contents. The `iterate_data` method must be implemented to take this data as input, together with a metadata dictionary, and return an iterable of documents.
+We now need a method to iterate over the source data; in this case, a string of the file contents. The `iterate_data` method must be implemented to split this string into documents.
+
+As input, it will receive the data object (the string content), and the metadata for the file. It should iterate over the documents we want to extract (in this case, over each book). Per document, it should return whatever data we want to provide to field extractors.
+
+This data can be of any format you want. Non-universal extractors like `CSV`, `XML`, etc., have specific arguments they expect, so you can tailor your output data to be compatible with a specific extractor class.
+
+In this case, it doesn't really make sense to use one of the existing extractors, so we will make our own extractor class below. At this step, we can choose what information we will provide to our extractor.
+
+In this case, our data provides a few properties for each book: the title, author, and year. So we can parse the lines of text into a mapping of properties to values.
 
 ```python
 from typing import Iterable, Dict, List
@@ -90,22 +102,15 @@ class BibliographyReader(Reader):
 
     def iterate_data(self, data: str, metadata: Dict) -> Iterable[Document]:
         sections = data.split('\n\n')
-        for index, section in enumerate(sections):
+        for section in sections:
             mapping = self._mapping_from_section(section)
-            yield {
-                field.name: field.extractor.apply(mapping=mapping, metadata=metadata, index=index)
-                for field in self.fields
-            }
+            yield {'mapping': mapping}
 
     def _mapping_from_section(self, section: str):
         lines = section.split('\n')
         keys_values = (line.split(': ') for line in lines if len(line))
         return { key: value for key, value in keys_values }
 ```
-
-For each field, the reader will create the value by calling `field.extractor.apply`. Note that we provide three named arguments to the extractor, which contain the data that extractors can access. `metadata` and `index` are standardised arguments, which are required to support the `Metadata` and `Order` extractors, respectively. (We can also leave these out, if we don't care about supporting these extractor types.)
-
-We also provide the argument `mapping` which contains the data found in the file, in a structure that makes sense for our data. The `mapping` argument isn't used by any of the extractors provided by this package, but we can write a custom extractor that will use it.
 
 ## Create custom extractor
 
@@ -188,12 +193,9 @@ class BibliographyReader(Reader):
 
     def iterate_data(self, data: str, metadata: Dict) -> Iterable[Document]:
         sections = data.split('\n\n')
-        for index, section in enumerate(sections):
+        for section in sections:
             mapping = self._mapping_from_section(section)
-            yield {
-                field.name: field.extractor.apply(mapping=mapping, metadata=metadata, index=index)
-                for field in self.fields
-            }
+            yield {'mapping': mapping}
 
     def _mapping_from_section(self, section: str):
         lines = section.split('\n')
