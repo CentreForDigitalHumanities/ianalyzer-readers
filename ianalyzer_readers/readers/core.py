@@ -303,7 +303,7 @@ class Reader:
         '''
         Iterate parsed source data, return data for each document.
 
-        This should reutrn the arguments that are passed on to field extractors per
+        This should return the arguments that are passed on to field extractors per
         document. These usually cater to a specific extractor type. For example, the
         `CSVReader` returns an argument `rows`, which is used by the `CSV` extractor.
 
