@@ -402,7 +402,7 @@ class XML(Extractor):
             yield soup
 
 
-    def _apply(self, soup_top, soup_entry, *nargs, **kwargs):
+    def _apply(self, soup_top=None, soup_entry=None, **kwargs):
         results_generator = self._select(
             self.tags,
             soup_top if self.toplevel else soup_entry,
