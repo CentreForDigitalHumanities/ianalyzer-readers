@@ -44,7 +44,7 @@ class HamletReader(CSVReader):
     def sources(self, **kwargs):
         for filename in os.listdir(self.data_directory):
             path = os.path.join(self.data_directory, filename)
-            yield path, {}
+            yield path
 ```
 
 This states that our data is located in `~/data`. The method `sources()` specifies how we can discover files in the directory. Here, we just return the path for each file.
@@ -99,6 +99,9 @@ reader = HamletReader()
 docs = list(reader.documents())
 print(docs)
 ```
+
+<details>
+<summary>Extracted documents</summary>
 
 The example section would look like this in the output:
 
@@ -175,6 +178,8 @@ The example section would look like this in the output:
     # ...
 ]
 ```
+
+</details>
 
 ## Tweaking extraction
 
@@ -263,6 +268,9 @@ class HamletReader(CSVReader):
             yield path, {}
 ```
 
+<details>
+<summary>Extracted documents</summary>
+
 Its output should look like this:
 
 ```python
@@ -320,14 +328,13 @@ Its output should look like this:
     # ...
 ]
 ```
+</details>
 
 ## Adding metadata
 
 Our `HamletReader` used a constant to return the name of the play. If we add more plays to our dataset, this won't work anymore.
 
-Let's say we add some more files in `~/data`, named `Othello.csv`, `The Tragedy of King Lear.csv`, etc.
-
-Let's turn our `HamletReader` into a `ShakespeareReader` that will assign the correct title of the play.
+Let's say we add some more files in `~/data`, named `Othello.csv`, `The Tragedy of King Lear.csv`, etc. Let's turn our `HamletReader` into a `ShakespeareReader` that will assign the correct title of the play, based on the filename.
 
 Our `sources()` function was already written to yield every file in the data directory, which is what we want. However, the way our CSV files are structured, we will need to find the name of the play at this stage, because it won't be available as a column in the CSV.
 
