@@ -64,3 +64,11 @@ def test_csv_example_reader():
             'When I to sulph\'rous and tormenting flames\n'
             'Must render up myself.'
     }
+
+def test_skip_field():
+    reader = ShakespeareReader()
+    reader.fields[0].skip = True
+
+    docs = reader.documents()
+    for doc in docs:
+        assert 'play' not in doc

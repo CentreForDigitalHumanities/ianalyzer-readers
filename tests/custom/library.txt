@@ -1,0 +1,15 @@
+Title: Pride and Prejudice
+Author: Jane Austen
+Year: 1813
+
+Title: Frankenstein, or, the Modern Prometheus
+Author: Mary Shelley
+Year: 1818
+
+Title: Moby Dick
+Author: Herman Melville
+Year: 1851
+
+Title: Alice in Wonderland
+Author: Lewis Carroll
+Year: 1865

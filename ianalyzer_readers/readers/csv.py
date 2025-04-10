@@ -5,10 +5,11 @@ Extraction is based on python's `csv` library.
 '''
 
 from .. import extract
-from typing import List, Dict, Iterable
-from .core import Reader, Document, Source
+from typing import Iterable
+from .core import Reader, Document
 import csv
 import sys
+from contextlib import contextmanager
 
 import logging
 
@@ -55,86 +56,46 @@ class CSVReader(Reader):
     use a fixed "preamble", e.g. to describe metadata or provenance.
     '''
 
-    def source2dicts(self, source: Source) -> Iterable[Document]:
-        '''
-        Given a CSV source file, returns an iterable of extracted documents.
 
-        Parameters:
-            source: the source file to extract. This can be a string with the path to
-                the file, or a tuple with a path and a dictionary containing metadata.
-        
-        Returns:
-            an iterable of document dictionaries. Each of these is a dictionary,
-                where the keys are names of this Reader's `fields`, and the values
-                are based on the extractor of each field.
-        '''
-
+    def validate(self):
         # make sure the field size is as big as the system permits
         csv.field_size_limit(sys.maxsize)
         self._reject_extractors(extract.XML)
 
-        if isinstance(source, str):
-            filename = source
-            metadata = {}
-        elif isinstance(source, bytes):
-            raise NotImplementedError()
-        else:
-            filename, metadata = source
 
-        with open(filename, 'r') as f:
-            logger.info('Reading CSV file {}...'.format(filename))
+    @contextmanager
+    def data_from_file(self, path: str):
+        with open(path, 'r') as f:
+            logger.info('Reading CSV file {}...'.format(path))
 
             # skip first n lines
             for _ in range(self.skip_lines):
                 next(f)
 
             reader = csv.DictReader(f, delimiter=self.delimiter)
-            document_id = None
-            rows = []
-            index = 0
-            for row in reader:
-                is_new_document = True
-
-                if self.required_field and not row.get(self.required_field):  # skip row if required_field is empty
-                    continue
+            yield reader
 
 
-                if self.field_entry:
-                    identifier = row[self.field_entry]
-                    if identifier == document_id:
-                        is_new_document = False
-                    else:
-                        document_id = identifier
+    def iterate_data(self, data: csv.DictReader, metadata) -> Iterable[Document]:
+        document_id = None
+        rows = []
+        for row in data:
+            is_new_document = True
 
-                if is_new_document and rows:
-                    yield self._document_from_rows(rows, metadata, index)
-                    rows = [row]
-                    index += 1
+            if self.required_field and not row.get(self.required_field):  # skip row if required_field is empty
+                continue
+
+            if self.field_entry:
+                identifier = row[self.field_entry]
+                if identifier == document_id:
+                    is_new_document = False
                 else:
-                    rows.append(row)
+                    document_id = identifier
 
-            yield self._document_from_rows(rows, metadata, index)
+            if is_new_document and rows:
+                yield {'rows': rows, 'metadata': metadata}
+                rows = [row]
+            else:
+                rows.append(row)
 
-    def _document_from_rows(self, rows: List[Dict], metadata: Dict, doc_index: int) -> Document:
-        '''
-        Extract a single document from a list of rows
-
-        Parameters:
-            rows: a list of row data. Since the CSVReader uses `csv.DictReader`, each row
-                is expected to be a dictionary.
-            metadata: a dictionary with file metadata. 
-            doc_index: the index of this document in the source file. The first document
-                extracted from a file should have index 0, the second should have index 1,
-                and so forth.
-        '''
-
-        doc = {
-            field.name: field.extractor.apply(
-                # The extractor is put to work by simply throwing at it
-                # any and all information it might need
-                rows=rows, metadata = metadata, index=doc_index
-            )
-            for field in self.fields if not field.skip
-        }
-
-        return doc
+        yield {'rows': rows}

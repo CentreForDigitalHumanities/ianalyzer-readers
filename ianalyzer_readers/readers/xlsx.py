@@ -1,9 +1,10 @@
 import logging
 import openpyxl
 from openpyxl.worksheet.worksheet import Worksheet
-from typing import Iterable
+from openpyxl.workbook.workbook import Workbook
+from typing import Dict
 
-from .core import Reader, Document, Source
+from .core import Reader
 from .. import extract
 
 logger = logging.getLogger()
@@ -48,36 +49,20 @@ class XLSXReader(Reader):
     '''
 
 
-    def source2dicts(self, source: Source) -> Iterable[Document]:
-        '''
-        Given an XLSX source file, returns an iterable of extracted documents.
-
-        Parameters:
-            source: the source file to extract. This can be a string with the path to
-                the file, or a tuple with a path and a dictionary containing metadata.
-        
-        Returns:
-            an iterable of document dictionaries. Each of these is a dictionary,
-                where the keys are names of this Reader's `fields`, and the values
-                are based on the extractor of each field.
-        '''
-
+    def validate(self):
         self._reject_extractors(extract.XML)
 
-        if isinstance(source, str):
-            filename = source
-            metadata = {}
-        elif isinstance(source, bytes):
-            raise NotImplementedError()
-        else:
-            filename, metadata = source
 
-        wb = openpyxl.load_workbook(filename)
-        logger.info('Reading XLSX file {}...'.format(filename))
+    def data_from_file(self, path) -> Workbook:
+        logger.info('Reading XLSX file {}...'.format(path))
+        return openpyxl.load_workbook(path)
 
-        sheets = wb.sheetnames
-        sheet = wb[sheets[0]]
+
+    def iterate_data(self, data: Workbook, metadata: Dict):
+        sheets = data.sheetnames
+        sheet = data[sheets[0]]
         return self._sheet2dicts(sheet, metadata)
+
 
     def _sheet2dicts(self, sheet: Worksheet, metadata):
         '''
@@ -91,7 +76,6 @@ class XLSXReader(Reader):
 
         header = list(next(data))
 
-        index = 0
         document_id = None
         rows = []
 
@@ -110,32 +94,10 @@ class XLSXReader(Reader):
             document_id = identifier
 
             if is_new_document and rows:
-                yield self._document_from_rows(rows, metadata, index)
+                yield {'rows': rows}
                 rows = [values]
-                index += 1
             else:
                 rows.append(values)
 
         if rows:
-            yield self._document_from_rows(rows, metadata, index)
-
-    def _document_from_rows(self, rows, metadata, doc_index):
-        '''
-        Extract a single document from a list of row data
-
-        Parameters:
-            rows: a list of row data. Each row is expected to be a dictionary.
-            metadata: a dictionary with file metadata. 
-            doc_index: the index of this document in the source file. The first document
-                extracted from a file should have index 0, the second should have index 1,
-                and so forth.
-        '''
-
-        doc = {
-            field.name: field.extractor.apply(
-                rows=rows, metadata=metadata, index=doc_index
-            )
-            for field in self.fields if not field.skip
-        }
-
-        return doc
+            yield {'rows': rows}
