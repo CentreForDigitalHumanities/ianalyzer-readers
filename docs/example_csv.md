@@ -1,6 +1,4 @@
-# Examples
-
-## CSV reader
+# CSV reader
 
 This example will define a basic CSV reader. 
 
@@ -32,7 +30,7 @@ class HamletReader(CSVReader):
     pass
 ```
 
-### File discovery
+## File discovery
 
 Before we can use the `HamletReader`, some additional attributes must be implemented. First, we need to implement `data_directory` and `sources`.
 
@@ -46,14 +44,14 @@ class HamletReader(CSVReader):
     def sources(self, **kwargs):
         for filename in os.listdir(self.data_directory):
             path = os.path.join(self.data_directory, filename)
-            yield path, {}
+            yield path
 ```
 
 This states that our data is located in `~/data`. The method `sources()` specifies how we can discover files in the directory. Here, we just return the path for each file.
 
 Note that `sources()` includes some assumptions about the contents of the directory, which is why you need to define it for your dataset. For instance, this implementation assumes that all files in the data directory are actually CSV files that can be parsed by the reader, and returns all files. You could add a check for the file extension if that is not appropriate.
 
-### Defining fields
+## Defining fields
 
 Next, we need to define the fields that should be extracted for each document. The original CSV provides each line in the play, and lists the act, scene, character and the text of the line. We want to extract all those values. For good measure, we will also include the name of the play as a constant value.
 
@@ -101,6 +99,9 @@ reader = HamletReader()
 docs = list(reader.documents())
 print(docs)
 ```
+
+<details>
+<summary>Extracted documents</summary>
 
 The example section would look like this in the output:
 
@@ -178,11 +179,13 @@ The example section would look like this in the output:
 ]
 ```
 
-### Tweaking extraction
+</details>
+
+## Tweaking extraction
 
 We can adjust the CSV extraction.
 
-#### Transforming values
+### Transforming values
 
 The `character` field returns the character's names in uppercase, e.g. `'HAMLET'` (how they appeared in the data). Say that we would prefer `'Hamlet'`; we can add a `transform` argument to the extractor for `character`.
 
@@ -201,7 +204,7 @@ The check `if name` is needed because the character can also be `None`. If a nam
 
 Now the character names in the output will be `'Hamlet'` and `'Ghost'`.
 
-#### Grouping rows
+### Grouping rows
 
 Instead of returning documents of a single line, we would like the reader to group multiple lines spoken by the same character.
 
@@ -265,6 +268,9 @@ class HamletReader(CSVReader):
             yield path, {}
 ```
 
+<details>
+<summary>Extracted documents</summary>
+
 Its output should look like this:
 
 ```python
@@ -322,14 +328,13 @@ Its output should look like this:
     # ...
 ]
 ```
+</details>
 
-### Adding metadata
+## Adding metadata
 
 Our `HamletReader` used a constant to return the name of the play. If we add more plays to our dataset, this won't work anymore.
 
-Let's say we add some more files in `~/data`, named `Othello.csv`, `The Tragedy of King Lear.csv`, etc.
-
-Let's turn our `HamletReader` into a `ShakespeareReader` that will assign the correct title of the play.
+Let's say we add some more files in `~/data`, named `Othello.csv`, `The Tragedy of King Lear.csv`, etc. Let's turn our `HamletReader` into a `ShakespeareReader` that will assign the correct title of the play, based on the filename.
 
 Our `sources()` function was already written to yield every file in the data directory, which is what we want. However, the way our CSV files are structured, we will need to find the name of the play at this stage, because it won't be available as a column in the CSV.
 
