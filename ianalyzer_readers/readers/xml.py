@@ -72,7 +72,6 @@ class XMLReader(Reader):
         the document.
     '''
 
-
     def validate(self):
         # Make sure that extractors are sensible
         self._reject_extractors(extract.CSV)
@@ -95,7 +94,6 @@ class XMLReader(Reader):
                 }
         else:
             logger.warning('Top-level tag not found')
-
 
     def extract_document(self, **document_data) -> Document:
         external_fields = self._external_fields()
@@ -122,7 +120,6 @@ class XMLReader(Reader):
         # yield the union of external fields and document fields
         return field_dict | external_dict
 
-
     def _external_fields(self) -> List[Field]:
         '''
         Subset of the reader's fields that rely on an external XML file.
@@ -130,7 +127,6 @@ class XMLReader(Reader):
         return [field for field in self.fields if
             isinstance(field.extractor, extract.XML) and field.extractor.external_file
         ]
-
 
     def _external_soup(self, metadata: Dict) -> Optional[bs4.BeautifulSoup]:
         '''
@@ -144,7 +140,6 @@ class XMLReader(Reader):
                     'Some fields have external_file property, but no external file is '
                     'provided in the source metadata'
                 )
-
 
     def _external_source2dict(self, soup, external_fields: List[Field], metadata: Dict):
         '''
@@ -167,7 +162,6 @@ class XMLReader(Reader):
             for field in external_fields if not field.skip
         }
 
-
     def data_from_file(self, filename: str) -> bs4.BeautifulSoup:
         '''
         Returns beatifulsoup soup object for a given xml file
@@ -179,13 +173,11 @@ class XMLReader(Reader):
         logger.info('Loaded {} into memory...'.format(filename))
         return self.data_from_bytes(data)
 
-
     def data_from_bytes(self, data: bytes) -> bs4.BeautifulSoup:
         '''
         Parses content of a xml file
         '''
         return bs4.BeautifulSoup(data, 'lxml-xml')
 
-
     def data_from_response(self, data: Response) -> bs4.BeautifulSoup:
-        return bs4.BeautifulSoup(data.text, 'lxml-xml')
+        return bs4.BeautifulSoup(data.content, 'lxml-xml')

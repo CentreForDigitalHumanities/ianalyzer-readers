@@ -111,7 +111,7 @@ def test_xml_reader():
 class MockResponse(requests.Response):
 
     @property
-    def text(self):
+    def content(self):
         test_directory = os.path.dirname(__file__)
         filename = os.path.join(test_directory, 'data', 'hamlet.xml')
         with open(filename, "r") as f:

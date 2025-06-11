@@ -219,11 +219,11 @@ class Reader:
 
         if isinstance(source_data, str):
             if not isfile(source_data):
-                raise FileNotFoundError('Invalid file path: {source_data}')
+                raise FileNotFoundError(f'Invalid file path: {source_data}')
             data = self.data_from_file(source_data)
-        elif isinstance(source, bytes):
+        elif isinstance(source_data, bytes):
             data = self.data_from_bytes(source_data)
-        elif isinstance(source, Response):
+        elif isinstance(source_data, Response):
             data = self.data_from_response(source_data)
         else:
             raise TypeError(f'Unknown source type: {type(source_data)}')
